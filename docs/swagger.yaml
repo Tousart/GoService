@@ -1,0 +1,106 @@
+basePath: /
+definitions:
+  types.GetResultHandler:
+    properties:
+      result:
+        type: string
+    type: object
+  types.GetStatusHandler:
+    properties:
+      status:
+        type: string
+    type: object
+  types.GetTaskIdHandler:
+    properties:
+      task_id:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: http server
+  title: My API
+  version: "1.0"
+paths:
+  /result/{task_id}:
+    get:
+      consumes:
+      - application/json
+      description: Get a tasks result by its id
+      parameters:
+      - description: Task Id
+        in: path
+        name: task_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/types.GetResultHandler'
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Get a Result
+      tags:
+      - result
+  /status/{task_id}:
+    get:
+      consumes:
+      - application/json
+      description: Get a tasks status by its id
+      parameters:
+      - description: Task Id
+        in: path
+        name: task_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/types.GetStatusHandler'
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Get a Status
+      tags:
+      - status
+  /task:
+    post:
+      consumes:
+      - application/json
+      description: make task and get tsk id
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/types.GetTaskIdHandler'
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Post a Task
+      tags:
+      - task
+swagger: "2.0"

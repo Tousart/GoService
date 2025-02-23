@@ -70,6 +70,7 @@ func (s *Tasks) getHandlerResult(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {string} string "Internal Server Error"
 // @Router /task [post]
 func (s *Tasks) postHandler(w http.ResponseWriter, r *http.Request) {
+	// fake comment
 	task := domain.CreateTask()
 	err := s.service.Post(task)
 	types.ProcessError(w, err, &types.GetTaskIdHandler{Value: task.Task_id})

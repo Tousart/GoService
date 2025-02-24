@@ -44,6 +44,10 @@ paths:
           description: Bad Request
           schema:
             type: string
+        "404":
+          description: Task id not found
+          schema:
+            type: string
         "500":
           description: Internal Server Error
           schema:
@@ -71,6 +75,10 @@ paths:
             $ref: '#/definitions/types.GetStatusHandler'
         "400":
           description: Bad Request
+          schema:
+            type: string
+        "404":
+          description: Task id not found
           schema:
             type: string
         "500":

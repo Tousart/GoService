@@ -4,6 +4,8 @@ import (
 	"httpServer/domain"
 	"httpServer/repository"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 type Tasks struct {
@@ -27,7 +29,8 @@ func (rs *Tasks) GetResult(task_id string) (string, error) {
 }
 
 // Создаем статус и результат таски
-func (rs *Tasks) Post(task *domain.Task) error {
+func (rs *Tasks) Post() (*domain.Task, error) {
+	task := createTask()
 	rs.repository.Post(task)
 
 	// имитация бурной деятельности
@@ -40,5 +43,13 @@ func (rs *Tasks) Post(task *domain.Task) error {
 		rs.repository.Post(task)
 	}(task)
 
-	return nil
+	return task, nil
+}
+
+func createTask() *domain.Task {
+	return &domain.Task{
+		Task_id: uuid.New().String(),
+		Status:  "in_progress",
+		Result:  "nothing",
+	}
 }

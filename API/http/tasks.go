@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	"httpServer/API/http/types"
-	"httpServer/domain"
 	"httpServer/usecases"
 
 	"github.com/go-chi/chi/v5"
@@ -26,6 +25,7 @@ func NewTasksHandler(service usecases.Tasks) *Tasks {
 // @Param task_id path string true "Task Id"
 // @Success 200 {object} types.GetStatusHandler
 // @Failure 400 {string} string "Bad Request"
+// @Failure 404 {string} string "Task id not found"
 // @Failure 500 {string} string "Internal Server Error"
 // @Router /status/{task_id} [get]
 func (s *Tasks) getHandlerStatus(w http.ResponseWriter, r *http.Request) {
@@ -46,6 +46,7 @@ func (s *Tasks) getHandlerStatus(w http.ResponseWriter, r *http.Request) {
 // @Param task_id path string true "Task Id"
 // @Success 200 {object} types.GetResultHandler
 // @Failure 400 {string} string "Bad Request"
+// @Failure 404 {string} string "Task id not found"
 // @Failure 500 {string} string "Internal Server Error"
 // @Router /result/{task_id} [get]
 func (s *Tasks) getHandlerResult(w http.ResponseWriter, r *http.Request) {
@@ -69,8 +70,7 @@ func (s *Tasks) getHandlerResult(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {string} string "Internal Server Error"
 // @Router /task [post]
 func (s *Tasks) postHandler(w http.ResponseWriter, r *http.Request) {
-	task := domain.CreateTask()
-	err := s.service.Post(task)
+	task, err := s.service.Post()
 	types.ProcessError(w, err, &types.GetTaskIdHandler{Value: task.Task_id})
 }
 

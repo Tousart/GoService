@@ -2,6 +2,7 @@ package types
 
 import (
 	"encoding/json"
+	"errors"
 	"httpServer/repository"
 	"net/http"
 
@@ -12,9 +13,9 @@ import (
 func CreateGetRequestHandler(r *http.Request) (*GetTaskIdHandler, error) {
 	task_id := chi.URLParam(r, "task_id")
 
-	// if task_id == "" {
-	// 	return nil, errors.New("Missing Task Id")
-	// }
+	if task_id == "" {
+		return nil, errors.New("Missing Task Id")
+	}
 
 	return &GetTaskIdHandler{Value: task_id}, nil
 }

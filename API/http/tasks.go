@@ -2,7 +2,6 @@ package http
 
 import (
 	"net/http"
-	"time"
 
 	"httpServer/API/http/types"
 	"httpServer/domain"
@@ -35,8 +34,8 @@ func (s *Tasks) getHandlerStatus(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Bad Request", http.StatusBadRequest)
 	}
 
-	value, err := s.service.GetStatus(req.Value)
-	types.ProcessError(w, err, &types.GetStatusHandler{Value: *value})
+	status, err := s.service.GetStatus(req.Value)
+	types.ProcessError(w, err, &types.GetStatusHandler{Value: status})
 }
 
 // @Summary Get a Result
@@ -56,8 +55,8 @@ func (s *Tasks) getHandlerResult(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	value, err := s.service.GetResult(req.Value)
-	types.ProcessError(w, err, &types.GetResultHandler{Value: *value})
+	result, err := s.service.GetResult(req.Value)
+	types.ProcessError(w, err, &types.GetResultHandler{Value: result})
 }
 
 // @Summary Post a Task
@@ -73,16 +72,6 @@ func (s *Tasks) postHandler(w http.ResponseWriter, r *http.Request) {
 	task := domain.CreateTask()
 	err := s.service.Post(task)
 	types.ProcessError(w, err, &types.GetTaskIdHandler{Value: task.Task_id})
-
-	// имитация бурной деятельности
-	go func(task *domain.Task) {
-		time.Sleep(40 * time.Second)
-
-		task.Status = "ready"
-		task.Result = "end"
-		s.service.Post(task)
-
-	}(task)
 }
 
 func (s *Tasks) WithTasksHandlers(r chi.Router) {

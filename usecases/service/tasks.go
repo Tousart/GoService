@@ -37,7 +37,8 @@ func (rs *Tasks) Post(task *domain.Task) error {
 		task.Status = "ready"
 		task.Result = "end"
 
+		rs.repository.Post(task)
 	}(task)
 
-	return rs.repository.Post(task)
+	return nil
 }

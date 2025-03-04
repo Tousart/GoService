@@ -5,7 +5,6 @@ import (
 	"httpServer/repository"
 )
 
-// Хранилище - мапа с тасками по айдишникам
 type Tasks struct {
 	data map[string]domain.Task
 }
@@ -39,7 +38,7 @@ func (rs *Tasks) GetResult(task_id string) (string, error) {
 }
 
 // Создаем статус и результат таски
-func (rs *Tasks) Post(task *domain.Task) error {
+func (rs *Tasks) PostTask(task *domain.Task) error {
 	rs.data[task.Task_id] = domain.Task{
 		Status: task.Status,
 		Result: task.Result,

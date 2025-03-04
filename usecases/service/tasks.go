@@ -29,9 +29,9 @@ func (rs *Tasks) GetResult(task_id string) (string, error) {
 }
 
 // Создаем статус и результат таски
-func (rs *Tasks) Post() (*domain.Task, error) {
+func (rs *Tasks) PostTask() (*domain.Task, error) {
 	task := createTask()
-	rs.repository.Post(task)
+	rs.repository.PostTask(task)
 
 	// имитация бурной деятельности
 	go func(task *domain.Task) {
@@ -40,7 +40,7 @@ func (rs *Tasks) Post() (*domain.Task, error) {
 		task.Status = "ready"
 		task.Result = "end"
 
-		rs.repository.Post(task)
+		rs.repository.PostTask(task)
 	}(task)
 
 	return task, nil

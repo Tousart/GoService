@@ -10,11 +10,15 @@ import (
 )
 
 type Tasks struct {
-	service usecases.Tasks
+	serviceTasks usecases.Tasks
+	serviceUsers usecases.Users
 }
 
-func NewTasksHandler(service usecases.Tasks) *Tasks {
-	return &Tasks{service: service}
+func NewTasksHandler(tasks usecases.Tasks, users usecases.Users) *Tasks {
+	return &Tasks{
+		serviceTasks: tasks,
+		serviceUsers: users,
+	}
 }
 
 // @Summary Get a Status
@@ -23,18 +27,27 @@ func NewTasksHandler(service usecases.Tasks) *Tasks {
 // @Accept json
 // @Produce json
 // @Param task_id path string true "Task Id"
+// @Param Authorization header string true "Bearer {auth_token}"
 // @Success 200 {object} types.GetStatusHandler
 // @Failure 400 {string} string "Bad Request"
+// @Failure 401 {string} string "Unauthorize"
 // @Failure 404 {string} string "Task id not found"
 // @Failure 500 {string} string "Internal Server Error"
+// @Security ApiKeyAuth
 // @Router /status/{task_id} [get]
 func (s *Tasks) getHandlerStatus(w http.ResponseWriter, r *http.Request) {
+	if err := types.Authorization(r, s.serviceUsers); err != nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
 	req, err := types.CreateGetRequestHandler(r)
 	if err != nil {
 		http.Error(w, "Bad Request", http.StatusBadRequest)
+		return
 	}
 
-	status, err := s.service.GetStatus(req.Value)
+	status, err := s.serviceTasks.GetStatus(req.Value)
 	types.ProcessError(w, err, &types.GetStatusHandler{Value: status})
 }
 
@@ -44,19 +57,27 @@ func (s *Tasks) getHandlerStatus(w http.ResponseWriter, r *http.Request) {
 // @Accept json
 // @Produce json
 // @Param task_id path string true "Task Id"
+// @Param Authorization header string true "Bearer {auth_token}"
 // @Success 200 {object} types.GetResultHandler
 // @Failure 400 {string} string "Bad Request"
+// @Failure 401 {string} string "Unauthorize"
 // @Failure 404 {string} string "Task id not found"
 // @Failure 500 {string} string "Internal Server Error"
+// @Security ApiKeyAuth
 // @Router /result/{task_id} [get]
 func (s *Tasks) getHandlerResult(w http.ResponseWriter, r *http.Request) {
+	if err := types.Authorization(r, s.serviceUsers); err != nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
 	req, err := types.CreateGetRequestHandler(r)
 	if err != nil {
 		http.Error(w, "Bad Request", http.StatusBadRequest)
 		return
 	}
 
-	result, err := s.service.GetResult(req.Value)
+	result, err := s.serviceTasks.GetResult(req.Value)
 	types.ProcessError(w, err, &types.GetResultHandler{Value: result})
 }
 
@@ -65,12 +86,20 @@ func (s *Tasks) getHandlerResult(w http.ResponseWriter, r *http.Request) {
 // @Tags task
 // @Accept json
 // @Produce json
+// @Param Authorization header string true "Bearer {auth_token}"
 // @Success 200 {object} types.GetTaskIdHandler
 // @Failure 400 {string} string "Bad Request"
+// @Failure 401 {string} string "Unauthorize"
 // @Failure 500 {string} string "Internal Server Error"
+// @Security ApiKeyAuth
 // @Router /task [post]
 func (s *Tasks) postHandler(w http.ResponseWriter, r *http.Request) {
-	task, err := s.service.Post()
+	if err := types.Authorization(r, s.serviceUsers); err != nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	task, err := s.serviceTasks.PostTask()
 	types.ProcessError(w, err, &types.GetTaskIdHandler{Value: task.Task_id})
 }
 

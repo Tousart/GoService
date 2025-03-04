@@ -9,11 +9,15 @@ import (
 )
 
 type Users struct {
-	servise usecases.Users
+	serviseUsers    usecases.Users
+	serviceSessions usecases.Sessions
 }
 
-func NewUsersHandler(service usecases.Users) *Users {
-	return &Users{servise: service}
+func NewUsersHandler(users usecases.Users, sessions usecases.Sessions) *Users {
+	return &Users{
+		serviseUsers:    users,
+		serviceSessions: sessions,
+	}
 }
 
 // @Summary Post a Register
@@ -33,7 +37,7 @@ func (s *Users) postRegisterHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = s.servise.PostRegister(req.Login, req.Password)
+	err = s.serviseUsers.PostRegister(req.Login, req.Password)
 	types.ProcessErrorRegister(w, err, req.Login)
 }
 
@@ -51,10 +55,17 @@ func (s *Users) postLoginHandler(w http.ResponseWriter, r *http.Request) {
 	req, err := types.CreateUserRequestHandler(r)
 	if err != nil {
 		http.Error(w, "Bad Request", http.StatusBadRequest)
+		return
 	}
 
-	sessionId, err := s.servise.PostLogin(req.Login, req.Password)
-	types.ProcessErrorLogin(w, err, &types.GetSessionIdHandler{SessionId: sessionId})
+	user_id, err := s.serviseUsers.PostLogin(req.Login, req.Password)
+	if err != nil {
+		http.Error(w, "Bad Request", http.StatusBadRequest)
+		return
+	}
+
+	session_id, err := s.serviceSessions.PostSessionId(user_id)
+	types.ProcessErrorLogin(w, err, &types.GetSessionIdHandler{SessionId: session_id})
 }
 
 func (s *Users) WithUsersHandlers(r chi.Router) {

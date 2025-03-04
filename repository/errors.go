@@ -3,9 +3,9 @@ package repository
 import "errors"
 
 var (
-	NotFound          = errors.New("Task id not found")
-	NotFoundUser      = errors.New("User not found")
-	NotFoundSessionId = errors.New("Session id not found")
-	IncorrectPassword = errors.New("Incorrect password")
-	UserExists        = errors.New("The user exists")
+	ErrNotFound          = errors.New("task id not found")
+	ErrNotFoundUser      = errors.New("user not found")
+	ErrNotFoundSessionId = errors.New("session id not found")
+	ErrIncorrectPassword = errors.New("incorrect password")
+	ErrUserExists        = errors.New("the user exists")
 )

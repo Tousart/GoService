@@ -9,57 +9,30 @@ type UsersRepository struct {
 	data map[string]domain.User
 }
 
-type SessionsRepository struct {
-	data map[string]domain.Session
+func NewUsersRepository() *UsersRepository {
+	return &UsersRepository{data: make(map[string]domain.User)}
 }
 
-type Users struct {
-	users    *UsersRepository
-	sessions *SessionsRepository
-}
-
-func NewUsersRepository() *Users {
-	return &Users{
-		users:    &UsersRepository{data: make(map[string]domain.User)},
-		sessions: &SessionsRepository{data: make(map[string]domain.Session)},
-	}
-}
-
-func (rs *Users) GetSessionId(session_id string) (string, error) {
-	value, exists := rs.sessions.data[session_id]
-
-	if !exists {
-		return "", repository.NotFoundSessionId
-	}
-
-	return value.Session_id, nil
-}
-
-func (rs *Users) PostRegister(user *domain.User) error {
-	_, exists := rs.users.data[user.Login]
+func (rs *UsersRepository) PostRegister(user *domain.User) error {
+	_, exists := rs.data[user.Login]
 
 	if exists {
-		return repository.UserExists
+		return repository.ErrUserExists
 	}
 
-	rs.users.data[user.Login] = *user
+	rs.data[user.Login] = *user
 
 	return nil
 }
 
-func (rs *Users) PostLogin(login string, password string, session_id string) error {
-	value, exists := rs.users.data[login]
+func (rs *UsersRepository) PostLogin(login string, password string) (string, error) {
+	value, exists := rs.data[login]
 
 	if !exists {
-		return repository.NotFoundUser
+		return "", repository.ErrNotFoundUser
 	} else if value.Password != password {
-		return repository.IncorrectPassword
+		return "", repository.ErrIncorrectPassword
 	}
 
-	rs.sessions.data[session_id] = domain.Session{
-		Session_id: session_id,
-		User_id:    value.Id,
-	}
-
-	return nil
+	return value.Id, nil
 }

@@ -28,13 +28,16 @@ import (
 func main() {
 	addr := flag.String("addr", ":8080", "address")
 
+	sessionsRepo := ramrepository.NewSessionsRepository()
+	sessionsService := service.NewSessions(sessionsRepo)
+
 	usersRepo := ramrepository.NewUsersRepository()
 	usersService := service.NewUsers(usersRepo)
-	usersNewHandler := http.NewUsersHandler(usersService)
+	usersNewHandler := http.NewUsersHandler(usersService, sessionsService)
 
 	tasksRepo := ramrepository.NewTasks()
 	tasksService := service.NewTasks(tasksRepo)
-	tasksNewHandler := http.NewTasksHandler(tasksService, usersService)
+	tasksNewHandler := http.NewTasksHandler(tasksService, sessionsService)
 
 	r := chi.NewRouter()
 	r.Get("/swagger/*", httpSwagger.WrapHandler)

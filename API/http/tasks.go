@@ -10,14 +10,14 @@ import (
 )
 
 type Tasks struct {
-	serviceTasks usecases.Tasks
-	serviceUsers usecases.Users
+	serviceTasks    usecases.Tasks
+	serviceSessions usecases.Sessions
 }
 
-func NewTasksHandler(tasks usecases.Tasks, users usecases.Users) *Tasks {
+func NewTasksHandler(tasks usecases.Tasks, sessions usecases.Sessions) *Tasks {
 	return &Tasks{
-		serviceTasks: tasks,
-		serviceUsers: users,
+		serviceTasks:    tasks,
+		serviceSessions: sessions,
 	}
 }
 
@@ -36,7 +36,7 @@ func NewTasksHandler(tasks usecases.Tasks, users usecases.Users) *Tasks {
 // @Security ApiKeyAuth
 // @Router /status/{task_id} [get]
 func (s *Tasks) getHandlerStatus(w http.ResponseWriter, r *http.Request) {
-	if err := types.Authorization(r, s.serviceUsers); err != nil {
+	if err := types.Authorization(r, s.serviceSessions); err != nil {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
@@ -48,7 +48,7 @@ func (s *Tasks) getHandlerStatus(w http.ResponseWriter, r *http.Request) {
 	}
 
 	status, err := s.serviceTasks.GetStatus(req.Value)
-	types.ProcessError(w, err, &types.GetStatusHandler{Value: status})
+	types.ProcessErrorTask(w, err, &types.GetStatusHandler{Value: status})
 }
 
 // @Summary Get a Result
@@ -66,7 +66,7 @@ func (s *Tasks) getHandlerStatus(w http.ResponseWriter, r *http.Request) {
 // @Security ApiKeyAuth
 // @Router /result/{task_id} [get]
 func (s *Tasks) getHandlerResult(w http.ResponseWriter, r *http.Request) {
-	if err := types.Authorization(r, s.serviceUsers); err != nil {
+	if err := types.Authorization(r, s.serviceSessions); err != nil {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
@@ -78,7 +78,7 @@ func (s *Tasks) getHandlerResult(w http.ResponseWriter, r *http.Request) {
 	}
 
 	result, err := s.serviceTasks.GetResult(req.Value)
-	types.ProcessError(w, err, &types.GetResultHandler{Value: result})
+	types.ProcessErrorTask(w, err, &types.GetResultHandler{Value: result})
 }
 
 // @Summary Post a Task
@@ -94,13 +94,13 @@ func (s *Tasks) getHandlerResult(w http.ResponseWriter, r *http.Request) {
 // @Security ApiKeyAuth
 // @Router /task [post]
 func (s *Tasks) postHandler(w http.ResponseWriter, r *http.Request) {
-	if err := types.Authorization(r, s.serviceUsers); err != nil {
+	if err := types.Authorization(r, s.serviceSessions); err != nil {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
 
 	task, err := s.serviceTasks.PostTask()
-	types.ProcessError(w, err, &types.GetTaskIdHandler{Value: task.Task_id})
+	types.ProcessErrorTask(w, err, &types.GetTaskIdHandler{Value: task.Task_id})
 }
 
 func (s *Tasks) WithTasksHandlers(r chi.Router) {

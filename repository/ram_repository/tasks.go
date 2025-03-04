@@ -20,7 +20,7 @@ func (rs *Tasks) GetStatus(task_id string) (string, error) {
 	value, exists := rs.data[task_id]
 
 	if !exists {
-		return "", repository.NotFound
+		return "", repository.ErrNotFound
 	}
 
 	return value.Status, nil
@@ -31,7 +31,7 @@ func (rs *Tasks) GetResult(task_id string) (string, error) {
 	value, exists := rs.data[task_id]
 
 	if !exists {
-		return "", repository.NotFound
+		return "", repository.ErrNotFound
 	}
 
 	return value.Result, nil

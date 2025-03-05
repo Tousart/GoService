@@ -10,14 +10,14 @@ import (
 )
 
 func Authorization(r *http.Request, service usecases.Sessions) error {
-	auth_header := r.Header.Get("Authorization")
-	if auth_header == "" {
+	authHeader := r.Header.Get("Authorization")
+	if authHeader == "" {
 		return errors.New("missing Authorization header")
-	} else if !strings.HasPrefix(auth_header, "Bearer ") {
+	} else if !strings.HasPrefix(authHeader, "Bearer ") {
 		return errors.New("invalid authorization header format")
 	}
 
-	_, err := service.GetSessionId(strings.TrimPrefix(auth_header, "Bearer "))
+	_, err := service.GetSessionId(strings.TrimPrefix(authHeader, "Bearer "))
 	if err != nil {
 		return errors.New("session id not found")
 	}
@@ -26,13 +26,13 @@ func Authorization(r *http.Request, service usecases.Sessions) error {
 }
 
 func CreateGetRequestHandler(r *http.Request) (*GetTaskIdHandler, error) {
-	task_id := chi.URLParam(r, "task_id")
+	taskId := chi.URLParam(r, "task_id")
 
-	if task_id == "" {
+	if taskId == "" {
 		return nil, errors.New("missing task id")
 	}
 
-	return &GetTaskIdHandler{Value: task_id}, nil
+	return &GetTaskIdHandler{Value: taskId}, nil
 }
 
 type GetTaskIdHandler struct {

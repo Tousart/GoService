@@ -17,13 +17,13 @@ func NewSessions(repo repository.Sessions) *Sessions {
 	}
 }
 
-func (rs *Sessions) GetSessionId(session_id string) (string, error) {
-	return rs.repository.GetSessionId(session_id)
+func (rs *Sessions) GetSessionId(sessionId string) (string, error) {
+	return rs.repository.GetSessionId(sessionId)
 }
 
-func (rs *Sessions) PostSessionId(user_id string) (string, error) {
-	session_id := createToken()
-	return rs.repository.PostSessionId(&domain.Session{Session_id: session_id, User_id: user_id})
+func (rs *Sessions) PostSessionId(userId string) (string, error) {
+	sessionId := createToken()
+	return rs.repository.PostSessionId(&domain.Session{SessionId: sessionId, UserId: userId})
 }
 
 // Гениальная функция генерации токена для сессии

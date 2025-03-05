@@ -3,7 +3,7 @@ package usecases
 import "httpServer/domain"
 
 type Tasks interface {
-	GetStatus(task_id string) (string, error)
-	GetResult(task_id string) (string, error)
+	GetStatus(taskId string) (string, error)
+	GetResult(taskId string) (string, error)
 	PostTask() (*domain.Task, error)
 }

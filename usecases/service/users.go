@@ -4,6 +4,8 @@ import (
 	"httpServer/domain"
 	"httpServer/repository"
 
+	"golang.org/x/crypto/bcrypt"
+
 	"github.com/google/uuid"
 )
 
@@ -17,8 +19,10 @@ func NewUsers(repo repository.Users) *Users {
 	}
 }
 
+// В базу данных отправляем захэшированный пароль
 func (rs *Users) PostRegister(login string, password string) error {
-	user := createUser(login, password)
+	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	user := createUser(login, string(hashedPassword))
 	return rs.repository.PostRegister(user)
 }
 

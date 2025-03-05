@@ -16,8 +16,8 @@ func NewTasks() *Tasks {
 }
 
 // Возвращаем статус таски
-func (rs *Tasks) GetStatus(task_id string) (string, error) {
-	value, exists := rs.data[task_id]
+func (rs *Tasks) GetStatus(taskId string) (string, error) {
+	value, exists := rs.data[taskId]
 
 	if !exists {
 		return "", repository.ErrNotFound
@@ -27,8 +27,8 @@ func (rs *Tasks) GetStatus(task_id string) (string, error) {
 }
 
 // Возвращаем результат таски
-func (rs *Tasks) GetResult(task_id string) (string, error) {
-	value, exists := rs.data[task_id]
+func (rs *Tasks) GetResult(taskId string) (string, error) {
+	value, exists := rs.data[taskId]
 
 	if !exists {
 		return "", repository.ErrNotFound
@@ -39,7 +39,7 @@ func (rs *Tasks) GetResult(task_id string) (string, error) {
 
 // Создаем статус и результат таски
 func (rs *Tasks) PostTask(task *domain.Task) error {
-	rs.data[task.Task_id] = domain.Task{
+	rs.data[task.TaskId] = domain.Task{
 		Status: task.Status,
 		Result: task.Result,
 	}

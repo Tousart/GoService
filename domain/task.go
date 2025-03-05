@@ -1,7 +1,7 @@
 package domain
 
 type Task struct {
-	Task_id string `json:"task_id"`
-	Status  string `json:"status"`
-	Result  string `json:"result"`
+	TaskId string `json:"task_id"`
+	Status string `json:"status"`
+	Result string `json:"result"`
 }

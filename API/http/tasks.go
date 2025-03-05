@@ -100,7 +100,7 @@ func (s *Tasks) postHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	task, err := s.serviceTasks.PostTask()
-	types.ProcessErrorTask(w, err, &types.GetTaskIdHandler{Value: task.Task_id})
+	types.ProcessErrorTask(w, err, &types.GetTaskIdHandler{Value: task.TaskId})
 }
 
 func (s *Tasks) WithTasksHandlers(r chi.Router) {

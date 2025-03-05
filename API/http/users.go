@@ -58,14 +58,14 @@ func (s *Users) postLoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user_id, err := s.serviseUsers.PostLogin(req.Login, req.Password)
+	userId, err := s.serviseUsers.PostLogin(req.Login, req.Password)
 	if err != nil {
 		http.Error(w, "Bad Request", http.StatusBadRequest)
 		return
 	}
 
-	session_id, err := s.serviceSessions.PostSessionId(user_id)
-	types.ProcessErrorLogin(w, err, &types.GetSessionIdHandler{SessionId: session_id})
+	sessionId, err := s.serviceSessions.PostSessionId(userId)
+	types.ProcessErrorLogin(w, err, &types.GetSessionIdHandler{SessionId: sessionId})
 }
 
 func (s *Users) WithUsersHandlers(r chi.Router) {

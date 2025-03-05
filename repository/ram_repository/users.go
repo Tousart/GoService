@@ -3,6 +3,8 @@ package ramrepository
 import (
 	"httpServer/domain"
 	"httpServer/repository"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 type UsersRepository struct {
@@ -30,7 +32,7 @@ func (rs *UsersRepository) PostLogin(login string, password string) (string, err
 
 	if !exists {
 		return "", repository.ErrNotFoundUser
-	} else if value.Password != password {
+	} else if bcrypt.CompareHashAndPassword([]byte(value.Password), []byte(password)) != nil {
 		return "", repository.ErrIncorrectPassword
 	}
 

@@ -6,15 +6,11 @@ import (
 )
 
 type SessionsRepository struct {
-	data      map[string]domain.Session
-	userToken map[string]string
+	data map[string]domain.Session
 }
 
 func NewSessionsRepository() *SessionsRepository {
-	return &SessionsRepository{
-		data:      make(map[string]domain.Session),
-		userToken: make(map[string]string),
-	}
+	return &SessionsRepository{data: make(map[string]domain.Session)}
 }
 
 func (rs *SessionsRepository) GetSessionId(sessionId string) (string, error) {
@@ -29,14 +25,7 @@ func (rs *SessionsRepository) GetSessionId(sessionId string) (string, error) {
 
 func (rs *SessionsRepository) PostSessionId(session *domain.Session) (string, error) {
 	sessionId := session.SessionId
-	userId := session.UserId
-
-	if id, exists := rs.userToken[userId]; exists {
-		delete(rs.data, id)
-	}
-
 	rs.data[sessionId] = *session
-	rs.userToken[userId] = sessionId
 
 	return sessionId, nil
 }

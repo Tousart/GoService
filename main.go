@@ -20,18 +20,29 @@ import (
 // @version 1.0
 // @description http server
 // @host localhost:8080
+// @securityDefinitions.apikey ApiKeyAuth
+// @in header
+// @name Authorization
 // @BasePath /
 
 func main() {
 	addr := flag.String("addr", ":8080", "address")
 
+	sessionsRepo := ramrepository.NewSessionsRepository()
+	sessionsService := service.NewSessions(sessionsRepo)
+
+	usersRepo := ramrepository.NewUsersRepository()
+	usersService := service.NewUsers(usersRepo)
+	usersNewHandler := http.NewUsersHandler(usersService, sessionsService)
+
 	tasksRepo := ramrepository.NewTasks()
 	tasksService := service.NewTasks(tasksRepo)
-	tasksNewHandler := http.NewTasksHandler(tasksService)
+	tasksNewHandler := http.NewTasksHandler(tasksService, sessionsService)
 
 	r := chi.NewRouter()
 	r.Get("/swagger/*", httpSwagger.WrapHandler)
 	tasksNewHandler.WithTasksHandlers(r)
+	usersNewHandler.WithUsersHandlers(r)
 
 	log.Printf("Starting server on %s", *addr)
 	if err := pkgHttp.CreateAndRunServer(r, *addr); err != nil {

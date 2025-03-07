@@ -1,8 +1,12 @@
-basePath: /
 definitions:
   types.GetResultHandler:
     properties:
       result:
+        type: string
+    type: object
+  types.GetSessionIdHandler:
+    properties:
+      token:
         type: string
     type: object
   types.GetStatusHandler:
@@ -15,6 +19,13 @@ definitions:
       task_id:
         type: string
     type: object
+  types.User:
+    properties:
+      login:
+        type: string
+      password:
+        type: string
+    type: object
 host: localhost:8080
 info:
   contact: {}
@@ -22,6 +33,66 @@ info:
   title: My API
   version: "1.0"
 paths:
+  /login:
+    post:
+      consumes:
+      - application/json
+      description: Login user
+      parameters:
+      - description: User
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/types.User'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/types.GetSessionIdHandler'
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Post a Login
+      tags:
+      - user
+  /register:
+    post:
+      consumes:
+      - application/json
+      description: Register user
+      parameters:
+      - description: User
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/types.User'
+      produces:
+      - text/plain
+      responses:
+        "200":
+          description: Пользователь {login} зарегистрирован.
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Post a Register
+      tags:
+      - user
   /result/{task_id}:
     get:
       consumes:
@@ -31,6 +102,11 @@ paths:
       - description: Task Id
         in: path
         name: task_id
+        required: true
+        type: string
+      - description: Bearer {auth_token}
+        in: header
+        name: Authorization
         required: true
         type: string
       produces:
@@ -44,6 +120,10 @@ paths:
           description: Bad Request
           schema:
             type: string
+        "401":
+          description: Unauthorize
+          schema:
+            type: string
         "404":
           description: Task id not found
           schema:
@@ -52,6 +132,8 @@ paths:
           description: Internal Server Error
           schema:
             type: string
+      security:
+      - ApiKeyAuth: []
       summary: Get a Result
       tags:
       - result
@@ -66,6 +148,11 @@ paths:
         name: task_id
         required: true
         type: string
+      - description: Bearer {auth_token}
+        in: header
+        name: Authorization
+        required: true
+        type: string
       produces:
       - application/json
       responses:
@@ -77,6 +164,10 @@ paths:
           description: Bad Request
           schema:
             type: string
+        "401":
+          description: Unauthorize
+          schema:
+            type: string
         "404":
           description: Task id not found
           schema:
@@ -85,6 +176,8 @@ paths:
           description: Internal Server Error
           schema:
             type: string
+      security:
+      - ApiKeyAuth: []
       summary: Get a Status
       tags:
       - status
@@ -93,6 +186,12 @@ paths:
       consumes:
       - application/json
       description: make task and get tsk id
+      parameters:
+      - description: Bearer {auth_token}
+        in: header
+        name: Authorization
+        required: true
+        type: string
       produces:
       - application/json
       responses:
@@ -104,11 +203,22 @@ paths:
           description: Bad Request
           schema:
             type: string
+        "401":
+          description: Unauthorize
+          schema:
+            type: string
         "500":
           description: Internal Server Error
           schema:
             type: string
+      security:
+      - ApiKeyAuth: []
       summary: Post a Task
       tags:
       - task
+securityDefinitions:
+  ApiKeyAuth:
+    in: header
+    name: Authorization
+    type: apiKey
 swagger: "2.0"

@@ -19,19 +19,19 @@ func NewTasks(repo repository.Tasks) *Tasks {
 }
 
 // Возвращаем статус таски
-func (rs *Tasks) GetStatus(task_id string) (string, error) {
-	return rs.repository.GetStatus(task_id)
+func (rs *Tasks) GetStatus(taskId string) (string, error) {
+	return rs.repository.GetStatus(taskId)
 }
 
 // Возвращаем результат таски
-func (rs *Tasks) GetResult(task_id string) (string, error) {
-	return rs.repository.GetResult(task_id)
+func (rs *Tasks) GetResult(taskId string) (string, error) {
+	return rs.repository.GetResult(taskId)
 }
 
 // Создаем статус и результат таски
-func (rs *Tasks) Post() (*domain.Task, error) {
+func (rs *Tasks) PostTask() (*domain.Task, error) {
 	task := createTask()
-	rs.repository.Post(task)
+	rs.repository.PostTask(task)
 
 	// имитация бурной деятельности
 	go func(task *domain.Task) {
@@ -40,7 +40,7 @@ func (rs *Tasks) Post() (*domain.Task, error) {
 		task.Status = "ready"
 		task.Result = "end"
 
-		rs.repository.Post(task)
+		rs.repository.PostTask(task)
 	}(task)
 
 	return task, nil
@@ -48,8 +48,8 @@ func (rs *Tasks) Post() (*domain.Task, error) {
 
 func createTask() *domain.Task {
 	return &domain.Task{
-		Task_id: uuid.New().String(),
-		Status:  "in_progress",
-		Result:  "nothing",
+		TaskId: uuid.New().String(),
+		Status: "in_progress",
+		Result: "nothing",
 	}
 }

@@ -5,11 +5,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"time"
 
 	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/client"
 	"github.com/docker/docker/pkg/stdcopy"
 	"github.com/streadway/amqp"
@@ -139,13 +141,13 @@ func (cp *CodeProcessor) MakeTask() error {
 
 func (cp *CodeProcessor) executeCodeInDocker(task Task) (stdout, stderr string, err error) {
 	// Определяем образ
-	var image string
+	var imageName string
 	if task.Translator == "python3" {
-		image = "python:3.9-alpine"
+		imageName = "python:3.9-alpine"
 	} else if task.Translator == "gcc" {
-		image = "gcc:latest"
+		imageName = "gcc:latest"
 	} else if task.Translator == "clang" {
-		image = "clang:latest"
+		imageName = "clang:latest"
 	} else {
 		return "", "", fmt.Errorf("unsupported translator: %s", task.Translator)
 	}
@@ -158,13 +160,24 @@ func (cp *CodeProcessor) executeCodeInDocker(task Task) (stdout, stderr string, 
 		cmd = []string{"sh", "-c", fmt.Sprintf("echo '%s' > /tmp/code.c && %s /tmp/code.c -o /tmp/out && /tmp/out", task.Code, task.Translator)}
 	}
 
+	ctx := context.Background()
+
+	// Загружаем образ
+	reader, err := cp.dockerCli.ImagePull(ctx, imageName, image.PullOptions{})
+	if err != nil {
+		return "", "", fmt.Errorf("failed to pull image: %v", err)
+	}
+	defer reader.Close()
+
+	// Ждем завершения загрузки образа
+	io.Copy(io.Discard, reader)
+
 	/* Cоздание контейнера и получение результата выполнения кода */
 
 	// Создаем контейнер
-	ctx := context.Background()
 	resp, err := cp.dockerCli.ContainerCreate(ctx,
 		&container.Config{
-			Image: image,
+			Image: imageName,
 			Cmd:   cmd,
 			Tty:   false,
 		},

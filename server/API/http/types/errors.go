@@ -8,7 +8,22 @@ import (
 	"net/http"
 )
 
-func ProcessErrorTask(w http.ResponseWriter, err error, resp any) {
+func ProcessErrorCreateTask(w http.ResponseWriter, err error, resp any) {
+	if errors.Is(err, repository.ErrNotFound) {
+		http.Error(w, "Task id not found", http.StatusNotFound)
+		return
+	} else if err != nil {
+		http.Error(w, "Internal Error", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusCreated)
+	if err := json.NewEncoder(w).Encode(resp); err != nil {
+		http.Error(w, "Internal Error", http.StatusInternalServerError)
+	}
+}
+
+func ProcessErrorGetTask(w http.ResponseWriter, err error, resp any) {
 	if errors.Is(err, repository.ErrNotFound) {
 		http.Error(w, "Task id not found", http.StatusNotFound)
 		return
@@ -28,6 +43,7 @@ func ProcessErrorRegister(w http.ResponseWriter, err error, resp string) {
 		return
 	}
 
+	w.WriteHeader(http.StatusCreated)
 	fmt.Fprintf(w, "Пользователь %s зарегистрирован.", resp)
 }
 

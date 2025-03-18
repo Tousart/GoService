@@ -27,21 +27,22 @@ func (rs *Tasks) GetStatus(taskId string) (string, error) {
 }
 
 // Возвращаем результат таски
-func (rs *Tasks) GetResult(taskId string) (string, error) {
+func (rs *Tasks) GetResult(taskId string) (string, string, error) {
 	value, exists := rs.data[taskId]
 
 	if !exists {
-		return "", repository.ErrNotFound
+		return "", "", repository.ErrNotFound
 	}
 
-	return value.Result, nil
+	return value.Stdout, value.Stderr, nil
 }
 
 // Создаем статус и результат таски
 func (rs *Tasks) PostTask(task *domain.Task) error {
 	rs.data[task.TaskId] = domain.Task{
 		Status: task.Status,
-		Result: task.Result,
+		Stdout: task.Stdout,
+		Stderr: task.Stderr,
 	}
 
 	return nil

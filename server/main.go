@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"httpServer/API/http"
+	"httpServer/repository/rabbitMQ"
 	ramrepository "httpServer/repository/ram_repository"
 	"httpServer/usecases/service"
 	"log"
@@ -28,19 +29,27 @@ import (
 func main() {
 	addr := flag.String("addr", ":8080", "address")
 
+	// Сессии
 	sessionsRepo := ramrepository.NewSessionsRepository()
 	sessionsService := service.NewSessions(sessionsRepo)
 
+	// Пользователи
 	usersRepo := ramrepository.NewUsersRepository()
 	usersService := service.NewUsers(usersRepo)
 	usersNewHandler := http.NewUsersHandler(usersService, sessionsService)
 
+	// Таски
+	tasksSender, err := rabbitMQ.NewRabbitMQSender("amqp://guest:guest@rabbitMQ:5672", "testQueue")
+	if err != nil {
+		log.Fatalf("failed %v", err)
+	}
 	tasksRepo := ramrepository.NewTasks()
-	tasksService := service.NewTasks(tasksRepo)
+	tasksService := service.NewTasks(tasksRepo, tasksSender)
 	tasksNewHandler := http.NewTasksHandler(tasksService, sessionsService)
 
 	r := chi.NewRouter()
 	r.Get("/swagger/*", httpSwagger.WrapHandler)
+	http.Health(r)
 	tasksNewHandler.WithTasksHandlers(r)
 	usersNewHandler.WithUsersHandlers(r)
 

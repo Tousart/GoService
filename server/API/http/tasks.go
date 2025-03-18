@@ -48,7 +48,7 @@ func (s *Tasks) getHandlerStatus(w http.ResponseWriter, r *http.Request) {
 	}
 
 	status, err := s.serviceTasks.GetStatus(req.Value)
-	types.ProcessErrorTask(w, err, &types.GetStatusHandler{Value: status})
+	types.ProcessErrorGetTask(w, err, &types.GetStatusHandler{Value: status})
 }
 
 // @Summary Get a Result
@@ -77,8 +77,8 @@ func (s *Tasks) getHandlerResult(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result, err := s.serviceTasks.GetResult(req.Value)
-	types.ProcessErrorTask(w, err, &types.GetResultHandler{Value: result})
+	stdout, stderr, err := s.serviceTasks.GetResult(req.Value)
+	types.ProcessErrorGetTask(w, err, &types.GetResultHandler{Stdout: stdout, Stderr: stderr})
 }
 
 // @Summary Post a Task
@@ -93,20 +93,41 @@ func (s *Tasks) getHandlerResult(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {string} string "Internal Server Error"
 // @Security ApiKeyAuth
 // @Router /task [post]
-func (s *Tasks) postHandler(w http.ResponseWriter, r *http.Request) {
+func (s *Tasks) postHandlerCreate(w http.ResponseWriter, r *http.Request) {
 	if err := types.Authorization(r, s.serviceSessions); err != nil {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
 
-	task, err := s.serviceTasks.PostTask()
-	types.ProcessErrorTask(w, err, &types.GetTaskIdHandler{Value: task.TaskId})
+	req, err := types.CreateTaskRequestHandler(r)
+	if err != nil {
+		http.Error(w, "Bad Request", http.StatusBadRequest)
+		return
+	}
+
+	task, err := s.serviceTasks.PostSendTask(req.Translator, req.Code)
+	types.ProcessErrorCreateTask(w, err, &types.GetTaskIdHandler{Value: task.TaskId})
+}
+
+func (s *Tasks) postHandlerCommit(w http.ResponseWriter, r *http.Request) {
+	req, err := types.CreateTaskCommitHandler(r)
+	if err != nil {
+		http.Error(w, "Bad Request", http.StatusBadRequest)
+		return
+	}
+
+	err = s.serviceTasks.PostCommitTask(req.TaskId, req.Stdout, req.Stderr)
+	if err != nil {
+		http.Error(w, "Internal Error", http.StatusInternalServerError)
+		return
+	}
 }
 
 func (s *Tasks) WithTasksHandlers(r chi.Router) {
 	r.Route("/", func(r chi.Router) {
 		r.Get("/status/{task_id}", s.getHandlerStatus)
 		r.Get("/result/{task_id}", s.getHandlerResult)
-		r.Post("/task", s.postHandler)
+		r.Post("/task", s.postHandlerCreate)
+		r.Post("/commit", s.postHandlerCommit)
 	})
 }

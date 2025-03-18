@@ -1,6 +1,7 @@
 package types
 
 import (
+	"encoding/json"
 	"errors"
 	"httpServer/usecases"
 	"net/http"
@@ -35,14 +36,48 @@ func CreateGetRequestHandler(r *http.Request) (*GetTaskIdHandler, error) {
 	return &GetTaskIdHandler{Value: taskId}, nil
 }
 
+func CreateTaskRequestHandler(r *http.Request) (*TaskBody, error) {
+	var taskBody TaskBody
+	err := json.NewDecoder(r.Body).Decode(&taskBody)
+
+	if err != nil {
+		return nil, errors.New("bad request")
+	}
+
+	return &taskBody, nil
+}
+
+func CreateTaskCommitHandler(r *http.Request) (*TaskResult, error) {
+	var taskResult TaskResult
+	err := json.NewDecoder(r.Body).Decode(&taskResult)
+
+	if err != nil {
+		return nil, errors.New("bad request")
+	}
+
+	return &taskResult, nil
+}
+
 type GetTaskIdHandler struct {
 	Value string `json:"task_id"`
 }
 
 type GetResultHandler struct {
-	Value string `json:"result"`
+	Stdout string `json:"stdout"`
+	Stderr string `json:"stderr"`
 }
 
 type GetStatusHandler struct {
 	Value string `json:"status"`
+}
+
+type TaskBody struct {
+	Translator string `json:"translator"`
+	Code       string `json:"code"`
+}
+
+type TaskResult struct {
+	TaskId string `json:"task_id"`
+	Stdout string `json:"stdout"`
+	Stderr string `json:"stderr"`
 }

@@ -11,14 +11,14 @@ func CreateUserRequestHandler(r *http.Request) (*User, error) {
 	err := json.NewDecoder(r.Body).Decode(&user)
 
 	if err != nil {
-		return &user, errors.New("bad request")
+		return nil, errors.New("bad request")
 	}
 
 	return &user, nil
 }
 
 type User struct {
-	Login    string `json:"login"`
+	Login    string `json:"username"`
 	Password string `json:"password"`
 }
 

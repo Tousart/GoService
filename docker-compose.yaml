@@ -1,0 +1,49 @@
+services:
+  http_server:
+    ports:
+     - "8080:8080"
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    depends_on:
+      rabbitMQ:
+        condition: service_healthy
+
+  code_processor:
+    ports:
+     - "80:8080"
+    build:
+      context: ./code_processor
+      dockerfile: Dockerfile
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock  # Монтируем Docker-сокет
+    depends_on:
+      rabbitMQ:
+        condition: service_healthy
+
+  rabbitMQ:
+    image: "rabbitmq:3-management"
+    ports:
+     - "5672:5672"
+     - "15672:15672"
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 10s
+      timeout: 10s
+      retries: 3
+
+  server_test:
+    build:
+      context: ./tests
+      dockerfile: Dockerfile
+    environment:
+      BASE_URL: http://http_server:8080
+    depends_on:
+      http_server:
+        condition: service_healthy
+    profiles: ['test']

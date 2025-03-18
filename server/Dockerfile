@@ -17,13 +17,19 @@ COPY . .
 RUN go build -o main .
 
 # Финальный этап (для уменьшения размера образа)
-FROM alpine AS runner
+FROM alpine:latest AS runner
 
 # Устанавливаем рабочую директорию
 WORKDIR /app
 
 # Копируем собранное приложение из этапа сборки
 COPY --from=build /build/main .
+
+# Устанавливаем curl
+RUN apk add --no-cache curl
+
+# Даем права на выполнение
+RUN chmod +x /app/main
 
 # Указываем команду для запуска
 CMD ["./main"]

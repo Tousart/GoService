@@ -87,7 +87,8 @@ func (s *Tasks) getHandlerResult(w http.ResponseWriter, r *http.Request) {
 // @Accept json
 // @Produce json
 // @Param Authorization header string true "Bearer {auth_token}"
-// @Success 200 {object} types.GetTaskIdHandler
+// @Param taskBody body types.TaskBody true "TaskBody"
+// @Success 201 {object} types.GetTaskIdHandler
 // @Failure 400 {string} string "Bad Request"
 // @Failure 401 {string} string "Unauthorize"
 // @Failure 500 {string} string "Internal Server Error"

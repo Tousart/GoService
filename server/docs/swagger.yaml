@@ -1,7 +1,9 @@
 definitions:
   types.GetResultHandler:
     properties:
-      result:
+      stderr:
+        type: string
+      stdout:
         type: string
     type: object
   types.GetSessionIdHandler:
@@ -19,11 +21,18 @@ definitions:
       task_id:
         type: string
     type: object
+  types.TaskBody:
+    properties:
+      code:
+        type: string
+      translator:
+        type: string
+    type: object
   types.User:
     properties:
-      login:
-        type: string
       password:
+        type: string
+      username:
         type: string
     type: object
 host: localhost:8080
@@ -78,7 +87,7 @@ paths:
       produces:
       - text/plain
       responses:
-        "200":
+        "201":
           description: Пользователь {login} зарегистрирован.
           schema:
             type: string
@@ -192,11 +201,17 @@ paths:
         name: Authorization
         required: true
         type: string
+      - description: TaskBody
+        in: body
+        name: taskBody
+        required: true
+        schema:
+          $ref: '#/definitions/types.TaskBody'
       produces:
       - application/json
       responses:
-        "200":
-          description: OK
+        "201":
+          description: Created
           schema:
             $ref: '#/definitions/types.GetTaskIdHandler'
         "400":

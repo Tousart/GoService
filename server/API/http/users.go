@@ -26,7 +26,7 @@ func NewUsersHandler(users usecases.Users, sessions usecases.Sessions) *Users {
 // @Accept json
 // @Produce plain
 // @Param user body types.User true "User"
-// @Success 200 {string} string "Пользователь {login} зарегистрирован."
+// @Success 201 {string} string "Пользователь {login} зарегистрирован."
 // @Failure 400 {string} string "Bad Request"
 // @Failure 500 {string} string "Internal Server Error"
 // @Router /register [post]

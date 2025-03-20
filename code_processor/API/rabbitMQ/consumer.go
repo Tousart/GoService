@@ -1,23 +1,22 @@
-package rabbitMQ
+package rabbitmq
 
 import (
-	"encoding/json"
+	"code_processor/config"
 	"fmt"
-	"httpServer/config"
-	"httpServer/domain"
 
+	"github.com/docker/docker/client"
 	"github.com/streadway/amqp"
 )
 
-type RabbitMQSender struct {
-	connection *amqp.Connection
-	channel    *amqp.Channel
-	queueName  string
+type Consumer struct {
+	Connection *amqp.Connection
+	Channel    *amqp.Channel
+	QueueName  string
+	DockerCli  *client.Client
 }
 
-func NewRabbitMQSender(cfg config.RabbitMQ) (*RabbitMQSender, error) {
+func NewConsumer(cfg config.RabbitMQ) (*Consumer, error) {
 	amqpURL := fmt.Sprintf("amqp://guest:guest@%s:%d", cfg.Host, cfg.Port)
-
 	conn, err := amqp.Dial(amqpURL)
 	if err != nil {
 		return nil, err
@@ -40,32 +39,16 @@ func NewRabbitMQSender(cfg config.RabbitMQ) (*RabbitMQSender, error) {
 		return nil, err
 	}
 
-	return &RabbitMQSender{
-		connection: conn,
-		channel:    ch,
-		queueName:  cfg.QueueName,
+	// Создаем Docker-клиент
+	dockerCli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
+	if err != nil {
+		return nil, fmt.Errorf("failed to create Docker client: %v", err)
+	}
+
+	return &Consumer{
+		Connection: conn,
+		Channel:    ch,
+		QueueName:  cfg.QueueName,
+		DockerCli:  dockerCli,
 	}, nil
-}
-
-func (r *RabbitMQSender) Send(message *domain.TaskMessage) error {
-	body, err := json.Marshal(*message)
-	if err != nil {
-		return err
-	}
-
-	// Отправка сообщения в очередь
-	err = r.channel.Publish(
-		"",
-		r.queueName,
-		false,
-		false,
-		amqp.Publishing{
-			ContentType: "application/json",
-			Body:        body,
-		})
-	if err != nil {
-		return err
-	}
-
-	return nil
 }

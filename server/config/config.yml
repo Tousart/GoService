@@ -1,0 +1,6 @@
+http_server:
+  address: ":8080"
+rabbit_mq:
+  host: "rabbitMQ"
+  port: 5672
+  queue_name: "testQueue"

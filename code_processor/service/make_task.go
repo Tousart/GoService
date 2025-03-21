@@ -2,11 +2,11 @@ package service
 
 import (
 	"bytes"
-	rabbitmq "code_processor/API/rabbitMQ"
-	"code_processor/domain"
 	"context"
 	"encoding/json"
 	"fmt"
+	rabbitmq "httpServer/API/rabbitMQ"
+	"httpServer/domain"
 	"io"
 	"log"
 	"net/http"

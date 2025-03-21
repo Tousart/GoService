@@ -1,6 +1,6 @@
 package usecases
 
-import "server/domain"
+import "httpServer/domain"
 
 type Tasks interface {
 	GetStatus(taskId string) (string, error)

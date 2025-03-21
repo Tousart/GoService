@@ -1,4 +1,4 @@
-module code_processor
+module httpServer
 
 go 1.23.5
 

@@ -3,8 +3,8 @@ package service
 import (
 	"crypto/rand"
 	"encoding/base64"
-	"server/domain"
-	"server/repository"
+	"httpServer/domain"
+	"httpServer/repository"
 )
 
 type Sessions struct {

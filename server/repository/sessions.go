@@ -1,6 +1,6 @@
 package repository
 
-import "server/domain"
+import "httpServer/domain"
 
 type Sessions interface {
 	GetSessionId(sessionIdd string) (string, error)

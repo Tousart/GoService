@@ -1,6 +1,6 @@
 package repository
 
-import "server/domain"
+import "httpServer/domain"
 
 type Users interface {
 	PostRegister(*domain.User) error

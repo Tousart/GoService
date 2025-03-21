@@ -1,0 +1,4 @@
+rabbit_mq:
+  host: "rabbitMQ"
+  port: 5672
+  queue_name: "testQueue"

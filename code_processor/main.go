@@ -1,18 +1,25 @@
 package main
 
 import (
-	"code_processor/service"
+	rabbitmq "httpServer/API/rabbitMQ"
+	"httpServer/config"
+	"httpServer/service"
 	"log"
 )
 
 func main() {
-	codeProcessor, err := service.NewCodeProcessor("amqp://guest:guest@rabbitMQ:5672", "testQueue")
+	codePrcssrFlags := config.ParseFlags()
+	var cfg config.CodeProcessorConfig
+	config.MustLoad(codePrcssrFlags.CodeProcessorConfigPath, &cfg)
+
+	// "amqp://guest:guest@rabbitMQ:5672"
+	consumer, err := rabbitmq.NewConsumer(cfg.RabbitMQ)
 	if err != nil {
-		log.Fatalf("Failed to make code processor %v", err)
+		log.Fatalf("Failed to make consumer %v", err)
 	}
 
-	err = codeProcessor.MakeTask()
-	if err != nil {
-		log.Fatalf("Error processing tasks: %v", err)
+	codeProcessor := service.NewCodeProcessor(consumer)
+	if err = codeProcessor.MakeTask(); err != nil {
+		log.Fatalf("Failed to execute task %v", err)
 	}
 }

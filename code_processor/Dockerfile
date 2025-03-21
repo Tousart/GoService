@@ -22,17 +22,12 @@ FROM alpine:latest AS runner
 # Устанавливаем рабочую директорию
 WORKDIR /app
 
-# Устанавливаем компиляторы и интерпретаторы
-# RUN apk add --no-cache \
-#     gcc \
-#     clang \
-#     python3
-
 # Копируем собранное приложение из этапа сборки
-COPY --from=build /build/main .
+COPY --from=build /build/main ./main
+COPY --from=build /build/config/config.yml ./config.yml
 
 # Даем права на выполнение
 RUN chmod +x /app/main
 
 # Указываем команду для запуска
-CMD ["./main"]
+CMD ["/app/main", "--config=/app/config.yml"]

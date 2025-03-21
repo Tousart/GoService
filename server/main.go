@@ -1,8 +1,8 @@
 package main
 
 import (
-	"flag"
 	"httpServer/API/http"
+	"httpServer/config"
 	"httpServer/repository/rabbitMQ"
 	ramrepository "httpServer/repository/ram_repository"
 	"httpServer/usecases/service"
@@ -27,7 +27,10 @@ import (
 // @BasePath /
 
 func main() {
-	addr := flag.String("addr", ":8080", "address")
+	// addr := flag.String("addr", ":8080", "address")
+	httpFlags := config.ParseFlags()
+	var cfg config.ServerConfig
+	config.MustLoad(httpFlags.HTTPConfigPath, &cfg)
 
 	// Сессии
 	sessionsRepo := ramrepository.NewSessionsRepository()
@@ -39,7 +42,7 @@ func main() {
 	usersNewHandler := http.NewUsersHandler(usersService, sessionsService)
 
 	// Таски
-	tasksSender, err := rabbitMQ.NewRabbitMQSender("amqp://guest:guest@rabbitMQ:5672", "testQueue")
+	tasksSender, err := rabbitMQ.NewRabbitMQSender(cfg.RabbitMQ)
 	if err != nil {
 		log.Fatalf("failed %v", err)
 	}
@@ -53,8 +56,8 @@ func main() {
 	tasksNewHandler.WithTasksHandlers(r)
 	usersNewHandler.WithUsersHandlers(r)
 
-	log.Printf("Starting server on %s", *addr)
-	if err := pkgHttp.CreateAndRunServer(r, *addr); err != nil {
+	log.Printf("Starting server on %s", cfg.HTTPConfig.Address)
+	if err := pkgHttp.CreateAndRunServer(r, cfg.HTTPConfig); err != nil {
 		log.Fatalf("Failed to start server %v", err)
 	}
 }

@@ -86,7 +86,7 @@ const docTemplate = `{
                     }
                 ],
                 "responses": {
-                    "200": {
+                    "201": {
                         "description": "Пользователь {login} зарегистрирован.",
                         "schema": {
                             "type": "string"
@@ -268,11 +268,20 @@ const docTemplate = `{
                         "name": "Authorization",
                         "in": "header",
                         "required": true
+                    },
+                    {
+                        "description": "TaskBody",
+                        "name": "taskBody",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/types.TaskBody"
+                        }
                     }
                 ],
                 "responses": {
-                    "200": {
-                        "description": "OK",
+                    "201": {
+                        "description": "Created",
                         "schema": {
                             "$ref": "#/definitions/types.GetTaskIdHandler"
                         }
@@ -303,7 +312,10 @@ const docTemplate = `{
         "types.GetResultHandler": {
             "type": "object",
             "properties": {
-                "result": {
+                "stderr": {
+                    "type": "string"
+                },
+                "stdout": {
                     "type": "string"
                 }
             }
@@ -332,13 +344,24 @@ const docTemplate = `{
                 }
             }
         },
+        "types.TaskBody": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string"
+                },
+                "translator": {
+                    "type": "string"
+                }
+            }
+        },
         "types.User": {
             "type": "object",
             "properties": {
-                "login": {
+                "password": {
                     "type": "string"
                 },
-                "password": {
+                "username": {
                     "type": "string"
                 }
             }

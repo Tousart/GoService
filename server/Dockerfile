@@ -23,7 +23,8 @@ FROM alpine:latest AS runner
 WORKDIR /app
 
 # Копируем собранное приложение из этапа сборки
-COPY --from=build /build/main .
+COPY --from=build /build/main ./main
+COPY --from=build /build/config/config.yml ./config.yml
 
 # Устанавливаем curl
 RUN apk add --no-cache curl
@@ -32,4 +33,4 @@ RUN apk add --no-cache curl
 RUN chmod +x /app/main
 
 # Указываем команду для запуска
-CMD ["./main"]
+CMD ["/app/main", "--config=/app/config.yml"]

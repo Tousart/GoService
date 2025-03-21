@@ -1,8 +1,15 @@
-module code_processor
+module httpServer
 
 go 1.23.5
 
 require github.com/docker/docker v28.0.1+incompatible
+
+require (
+	github.com/BurntSushi/toml v1.2.1 // indirect
+	github.com/joho/godotenv v1.5.1 // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
+	olympos.io/encoding/edn v0.0.0-20201019073823-d3554ca0b0a3 // indirect
+)
 
 require (
 	github.com/Microsoft/go-winio v0.4.14 // indirect
@@ -14,6 +21,7 @@ require (
 	github.com/go-logr/logr v1.4.2 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
+	github.com/ilyakaznacheev/cleanenv v1.5.0
 	github.com/moby/docker-image-spec v1.3.1 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.1.1 // indirect

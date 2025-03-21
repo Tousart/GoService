@@ -2,10 +2,11 @@ package service
 
 import (
 	"bytes"
-	"code_processor/domain"
 	"context"
 	"encoding/json"
 	"fmt"
+	rabbitmq "httpServer/API/rabbitMQ"
+	"httpServer/domain"
 	"io"
 	"log"
 	"net/http"
@@ -13,58 +14,20 @@ import (
 
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/image"
-	"github.com/docker/docker/client"
 	"github.com/docker/docker/pkg/stdcopy"
-	"github.com/streadway/amqp"
 )
 
 type CodeProcessor struct {
-	connection *amqp.Connection
-	channel    *amqp.Channel
-	queueName  string
-	dockerCli  *client.Client
+	Consumer *rabbitmq.Consumer
 }
 
-func NewCodeProcessor(amqpURL, queueName string) (*CodeProcessor, error) {
-	conn, err := amqp.Dial(amqpURL)
-	if err != nil {
-		return nil, err
-	}
-
-	ch, err := conn.Channel()
-	if err != nil {
-		return nil, err
-	}
-
-	_, err = ch.QueueDeclare(
-		queueName, // имя очереди
-		true,      // устойчивость (сохранится при перезапуске сервера)
-		false,     // очередь НЕ будет удалена, даже когда нет потребителей
-		false,     // будет эксклюзивна только для текущего соединения
-		false,     // будет ждать ответа от сервера, что очередь создана
-		nil,       // дополнительные аргументы
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	// Создаем Docker-клиент
-	dockerCli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
-	if err != nil {
-		return nil, fmt.Errorf("failed to create Docker client: %v", err)
-	}
-
-	return &CodeProcessor{
-		connection: conn,
-		channel:    ch,
-		queueName:  queueName,
-		dockerCli:  dockerCli,
-	}, nil
+func NewCodeProcessor(consumer *rabbitmq.Consumer) *CodeProcessor {
+	return &CodeProcessor{Consumer: consumer}
 }
 
 func (cp *CodeProcessor) MakeTask() error {
-	msgs, err := cp.channel.Consume(
-		cp.queueName,
+	msgs, err := cp.Consumer.Channel.Consume(
+		cp.Consumer.QueueName,
 		"",
 		true,
 		false,
@@ -152,7 +115,7 @@ func (cp *CodeProcessor) executeCodeInDocker(task domain.Task) (stdout, stderr s
 	ctx := context.Background()
 
 	// Загружаем образ
-	reader, err := cp.dockerCli.ImagePull(ctx, imageName, image.PullOptions{})
+	reader, err := cp.Consumer.DockerCli.ImagePull(ctx, imageName, image.PullOptions{})
 	if err != nil {
 		return "", "", fmt.Errorf("failed to pull image: %v", err)
 	}
@@ -164,7 +127,7 @@ func (cp *CodeProcessor) executeCodeInDocker(task domain.Task) (stdout, stderr s
 	/* Cоздание контейнера и получение результата выполнения кода */
 
 	// Создаем контейнер
-	resp, err := cp.dockerCli.ContainerCreate(ctx,
+	resp, err := cp.Consumer.DockerCli.ContainerCreate(ctx,
 		&container.Config{
 			Image: imageName,
 			Cmd:   cmd,
@@ -185,7 +148,7 @@ func (cp *CodeProcessor) executeCodeInDocker(task domain.Task) (stdout, stderr s
 	}
 
 	// Запускаем контейнер
-	err = cp.dockerCli.ContainerStart(ctx, resp.ID, container.StartOptions{})
+	err = cp.Consumer.DockerCli.ContainerStart(ctx, resp.ID, container.StartOptions{})
 	if err != nil {
 		return "", "", fmt.Errorf("failed to start container: %v", err)
 	}
@@ -196,7 +159,7 @@ func (cp *CodeProcessor) executeCodeInDocker(task domain.Task) (stdout, stderr s
 	defer cancel()
 
 	// Ждем завершения контейнера
-	statusCh, errCh := cp.dockerCli.ContainerWait(timeoutCtx, resp.ID, container.WaitConditionNotRunning)
+	statusCh, errCh := cp.Consumer.DockerCli.ContainerWait(timeoutCtx, resp.ID, container.WaitConditionNotRunning)
 	select {
 	case err := <-errCh:
 		if err != nil {
@@ -206,7 +169,7 @@ func (cp *CodeProcessor) executeCodeInDocker(task domain.Task) (stdout, stderr s
 	}
 
 	// Получаем логи (stdout и stderr)
-	out, err := cp.dockerCli.ContainerLogs(ctx, resp.ID, container.LogsOptions{
+	out, err := cp.Consumer.DockerCli.ContainerLogs(ctx, resp.ID, container.LogsOptions{
 		ShowStdout: true,
 		ShowStderr: true,
 	})
@@ -223,7 +186,7 @@ func (cp *CodeProcessor) executeCodeInDocker(task domain.Task) (stdout, stderr s
 	}
 
 	// Удаляем контейнер вручную
-	err = cp.dockerCli.ContainerRemove(ctx, resp.ID, container.RemoveOptions{
+	err = cp.Consumer.DockerCli.ContainerRemove(ctx, resp.ID, container.RemoveOptions{
 		Force: true, // Принудительное удаление, если контейнер еще работает
 	})
 	if err != nil {

@@ -3,7 +3,7 @@ package types
 import (
 	"encoding/json"
 	"errors"
-	"httpServer/usecases"
+	"httpServer/server/usecases"
 	"net/http"
 	"strings"
 

@@ -1,8 +1,8 @@
 package ramrepository
 
 import (
-	"httpServer/domain"
-	"httpServer/repository"
+	"httpServer/server/domain"
+	"httpServer/server/repository"
 
 	"golang.org/x/crypto/bcrypt"
 )

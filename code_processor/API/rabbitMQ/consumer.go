@@ -2,7 +2,7 @@ package rabbitmq
 
 import (
 	"fmt"
-	"httpServer/config"
+	"httpServer/code_processor/config"
 
 	"github.com/docker/docker/client"
 	"github.com/streadway/amqp"

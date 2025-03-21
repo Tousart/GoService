@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"httpServer/repository"
+	"httpServer/server/repository"
 	"net/http"
 )
 

@@ -1,6 +1,6 @@
 package repository
 
-import "httpServer/domain"
+import "httpServer/server/domain"
 
 type TaksSender interface {
 	Send(message *domain.TaskMessage) error

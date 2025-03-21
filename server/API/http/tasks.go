@@ -3,8 +3,8 @@ package http
 import (
 	"net/http"
 
-	"httpServer/API/http/types"
-	"httpServer/usecases"
+	"httpServer/server/API/http/types"
+	"httpServer/server/usecases"
 
 	"github.com/go-chi/chi/v5"
 )

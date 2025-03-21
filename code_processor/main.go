@@ -1,9 +1,9 @@
 package main
 
 import (
-	rabbitmq "httpServer/API/rabbitMQ"
-	"httpServer/config"
-	"httpServer/service"
+	rabbitmq "httpServer/code_processor/API/rabbitMQ"
+	"httpServer/code_processor/config"
+	"httpServer/code_processor/service"
 	"log"
 )
 

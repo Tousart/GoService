@@ -1,6 +1,6 @@
 package repository
 
-import "httpServer/domain"
+import "server/domain"
 
 type Tasks interface {
 	GetStatus(taskId string) (string, error)

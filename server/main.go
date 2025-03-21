@@ -1,16 +1,16 @@
 package main
 
 import (
-	"httpServer/API/http"
-	"httpServer/config"
-	"httpServer/repository/rabbitMQ"
-	ramrepository "httpServer/repository/ram_repository"
-	"httpServer/usecases/service"
 	"log"
+	"server/API/http"
+	"server/config"
+	"server/repository/rabbitMQ"
+	ramrepository "server/repository/ram_repository"
+	"server/usecases/service"
 
-	pkgHttp "httpServer/pkg/http"
+	pkgHttp "server/pkg/http"
 
-	_ "httpServer/docs"
+	_ "server/docs"
 
 	httpSwagger "github.com/swaggo/http-swagger"
 

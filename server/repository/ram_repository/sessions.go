@@ -1,8 +1,8 @@
 package ramrepository
 
 import (
-	"httpServer/domain"
-	"httpServer/repository"
+	"server/domain"
+	"server/repository"
 )
 
 type SessionsRepository struct {

@@ -1,8 +1,8 @@
 package service
 
 import (
-	"httpServer/domain"
-	"httpServer/repository"
+	"server/domain"
+	"server/repository"
 
 	"golang.org/x/crypto/bcrypt"
 

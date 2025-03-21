@@ -1,8 +1,8 @@
 package http
 
 import (
-	"httpServer/config"
 	"net/http"
+	"server/config"
 
 	"github.com/go-chi/chi/v5"
 )

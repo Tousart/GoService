@@ -3,8 +3,8 @@ package rabbitMQ
 import (
 	"encoding/json"
 	"fmt"
-	"httpServer/config"
-	"httpServer/domain"
+	"server/config"
+	"server/domain"
 
 	"github.com/streadway/amqp"
 )

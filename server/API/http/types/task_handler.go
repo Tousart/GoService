@@ -3,8 +3,8 @@ package types
 import (
 	"encoding/json"
 	"errors"
-	"httpServer/usecases"
 	"net/http"
+	"server/usecases"
 	"strings"
 
 	"github.com/go-chi/chi/v5"

@@ -4,6 +4,6 @@ WORKDIR /app
 
 COPY . .
 
-RUN pip install -r requirements.txt
+RUN pip install -r tests/requirements.txt
 
-CMD ["pytest", "test.py"]
+CMD ["pytest", "tests/test.py"]

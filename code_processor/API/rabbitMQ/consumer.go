@@ -1,54 +1,61 @@
 package rabbitmq
 
 import (
-	"fmt"
-	"httpServer/code_processor/config"
-
-	"github.com/docker/docker/client"
-	"github.com/streadway/amqp"
+	"encoding/json"
+	"httpServer/code_processor/domain"
+	"httpServer/code_processor/service"
+	"log"
 )
 
 type Consumer struct {
-	Connection *amqp.Connection
-	Channel    *amqp.Channel
-	QueueName  string
-	DockerCli  *client.Client
+	Consumer service.CodeProcessor
 }
 
-func NewConsumer(cfg config.RabbitMQ) (*Consumer, error) {
-	amqpURL := fmt.Sprintf("amqp://guest:guest@%s:%d", cfg.Host, cfg.Port)
-	conn, err := amqp.Dial(amqpURL)
-	if err != nil {
-		return nil, err
-	}
+func NewConsumer(codeProcessor service.CodeProcessor) *Consumer {
+	return &Consumer{Consumer: codeProcessor}
+}
 
-	ch, err := conn.Channel()
-	if err != nil {
-		return nil, err
-	}
-
-	_, err = ch.QueueDeclare(
-		cfg.QueueName, // имя очереди
-		true,          // устойчивость (сохранится при перезапуске сервера)
-		false,         // очередь НЕ будет удалена, даже когда нет потребителей
-		false,         // будет эксклюзивна только для текущего соединения
-		false,         // будет ждать ответа от сервера, что очередь создана
-		nil,           // дополнительные аргументы
+func (cp *Consumer) MakeTask() error {
+	msgs, err := cp.Consumer.Channel.Consume(
+		cp.Consumer.QueueName,
+		"",
+		true,
+		false,
+		false,
+		false,
+		nil,
 	)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	// Создаем Docker-клиент
-	dockerCli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
-	if err != nil {
-		return nil, fmt.Errorf("failed to create Docker client: %v", err)
-	}
+	forever := make(chan bool)
+	go func() {
+		for d := range msgs {
+			// Берем значения полей для таски из тела сообщения
+			var task domain.Task
+			err := json.Unmarshal(d.Body, &task)
+			if err != nil {
+				log.Printf("failed to unmarshal body: %v", err)
+				continue
+			}
+			// log.Printf("%s, %s, %s\n", task.TaskId, task.Translator, task.Code)
 
-	return &Consumer{
-		Connection: conn,
-		Channel:    ch,
-		QueueName:  cfg.QueueName,
-		DockerCli:  dockerCli,
-	}, nil
+			// Выполняем код
+			stdout, stderr, err := cp.Consumer.ExecuteCodeInDocker(task)
+			if err != nil {
+				log.Printf("Failed to execute code: %v", err)
+				continue
+			}
+
+			err = cp.Consumer.SendResult(task.TaskId, stdout, stderr)
+			if err != nil {
+				log.Printf("Failed to send result: %v", err)
+				continue
+			}
+		}
+	}()
+	<-forever
+
+	return nil
 }

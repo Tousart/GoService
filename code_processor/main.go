@@ -13,13 +13,13 @@ func main() {
 	config.MustLoad(codePrcssrFlags.CodeProcessorConfigPath, &cfg)
 
 	// "amqp://guest:guest@rabbitMQ:5672"
-	consumer, err := rabbitmq.NewConsumer(cfg.RabbitMQ)
+	codeProcessor, err := service.NewCodeProcessor(cfg.RabbitMQ)
 	if err != nil {
 		log.Fatalf("Failed to make consumer %v", err)
 	}
 
-	codeProcessor := service.NewCodeProcessor(consumer)
-	if err = codeProcessor.MakeTask(); err != nil {
+	consumer := rabbitmq.NewConsumer(*codeProcessor)
+	if err = consumer.MakeTask(); err != nil {
 		log.Fatalf("Failed to execute task %v", err)
 	}
 }

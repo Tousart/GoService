@@ -5,7 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	rabbitmq "httpServer/code_processor/API/rabbitMQ"
+	"httpServer/code_processor/config"
 	"httpServer/code_processor/domain"
 	"io"
 	"log"
@@ -14,84 +14,57 @@ import (
 
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/image"
+	"github.com/docker/docker/client"
 	"github.com/docker/docker/pkg/stdcopy"
+	"github.com/streadway/amqp"
 )
 
 type CodeProcessor struct {
-	Consumer *rabbitmq.Consumer
+	Connection *amqp.Connection
+	Channel    *amqp.Channel
+	QueueName  string
+	DockerCli  *client.Client
 }
 
-func NewCodeProcessor(consumer *rabbitmq.Consumer) *CodeProcessor {
-	return &CodeProcessor{Consumer: consumer}
-}
-
-func (cp *CodeProcessor) MakeTask() error {
-	msgs, err := cp.Consumer.Channel.Consume(
-		cp.Consumer.QueueName,
-		"",
-		true,
-		false,
-		false,
-		false,
-		nil,
-	)
+func NewCodeProcessor(cfg config.RabbitMQ) (*CodeProcessor, error) {
+	amqpURL := fmt.Sprintf("amqp://guest:guest@%s:%d", cfg.Host, cfg.Port)
+	conn, err := amqp.Dial(amqpURL)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	forever := make(chan bool)
-	go func() {
-		for d := range msgs {
-			// Берем значения полей для таски из тела сообщения
-			var task domain.Task
-			err := json.Unmarshal(d.Body, &task)
-			if err != nil {
-				log.Printf("failed to unmarshal body: %v", err)
-				continue
-			}
-			// log.Printf("%s, %s, %s\n", task.TaskId, task.Translator, task.Code)
+	ch, err := conn.Channel()
+	if err != nil {
+		return nil, err
+	}
 
-			// Выполняем код
-			stdout, stderr, err := cp.executeCodeInDocker(task)
-			if err != nil {
-				log.Printf("Failed to execute code: %v", err)
-				continue
-			}
+	_, err = ch.QueueDeclare(
+		cfg.QueueName, // имя очереди
+		true,          // устойчивость (сохранится при перезапуске сервера)
+		false,         // очередь НЕ будет удалена, даже когда нет потребителей
+		false,         // будет эксклюзивна только для текущего соединения
+		false,         // будет ждать ответа от сервера, что очередь создана
+		nil,           // дополнительные аргументы
+	)
+	if err != nil {
+		return nil, err
+	}
 
-			// Кладем результат кода в json для отправки ответа
-			resultBody, err := json.Marshal(domain.Result{
-				TaskId: task.TaskId,
-				Stdout: stdout,
-				Stderr: stderr,
-			})
-			if err != nil {
-				log.Printf("Failed to marshal result: %v", err)
-				continue
-			}
-			// log.Printf("Result %s", string(resultBody))
+	// Создаем Docker-клиент
+	dockerCli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
+	if err != nil {
+		return nil, fmt.Errorf("failed to create Docker client: %v", err)
+	}
 
-			// Создаем и делаем запрос на отправку данных в бд
-			req, err := http.NewRequest("POST", "http://http_server:8080/commit", bytes.NewBuffer([]byte(resultBody)))
-			if err != nil {
-				log.Printf("Failed to create request: %v", err)
-				continue
-			}
-
-			client := &http.Client{}
-			_, err = client.Do(req)
-			if err != nil {
-				log.Printf("Failed to make request: %v", err)
-				continue
-			}
-			// log.Println("Request completed")
-		}
-	}()
-	<-forever
-
-	return nil
+	return &CodeProcessor{
+		Connection: conn,
+		Channel:    ch,
+		QueueName:  cfg.QueueName,
+		DockerCli:  dockerCli,
+	}, nil
 }
 
-func (cp *CodeProcessor) executeCodeInDocker(task domain.Task) (stdout, stderr string, err error) {
+func (cp *CodeProcessor) ExecuteCodeInDocker(task domain.Task) (stdout, stderr string, err error) {
 	// Определяем образ
 	var imageName string
 	if task.Translator == "python3" {
@@ -115,7 +88,7 @@ func (cp *CodeProcessor) executeCodeInDocker(task domain.Task) (stdout, stderr s
 	ctx := context.Background()
 
 	// Загружаем образ
-	reader, err := cp.Consumer.DockerCli.ImagePull(ctx, imageName, image.PullOptions{})
+	reader, err := cp.DockerCli.ImagePull(ctx, imageName, image.PullOptions{})
 	if err != nil {
 		return "", "", fmt.Errorf("failed to pull image: %v", err)
 	}
@@ -127,7 +100,7 @@ func (cp *CodeProcessor) executeCodeInDocker(task domain.Task) (stdout, stderr s
 	/* Cоздание контейнера и получение результата выполнения кода */
 
 	// Создаем контейнер
-	resp, err := cp.Consumer.DockerCli.ContainerCreate(ctx,
+	resp, err := cp.DockerCli.ContainerCreate(ctx,
 		&container.Config{
 			Image: imageName,
 			Cmd:   cmd,
@@ -148,7 +121,7 @@ func (cp *CodeProcessor) executeCodeInDocker(task domain.Task) (stdout, stderr s
 	}
 
 	// Запускаем контейнер
-	err = cp.Consumer.DockerCli.ContainerStart(ctx, resp.ID, container.StartOptions{})
+	err = cp.DockerCli.ContainerStart(ctx, resp.ID, container.StartOptions{})
 	if err != nil {
 		return "", "", fmt.Errorf("failed to start container: %v", err)
 	}
@@ -159,7 +132,7 @@ func (cp *CodeProcessor) executeCodeInDocker(task domain.Task) (stdout, stderr s
 	defer cancel()
 
 	// Ждем завершения контейнера
-	statusCh, errCh := cp.Consumer.DockerCli.ContainerWait(timeoutCtx, resp.ID, container.WaitConditionNotRunning)
+	statusCh, errCh := cp.DockerCli.ContainerWait(timeoutCtx, resp.ID, container.WaitConditionNotRunning)
 	select {
 	case err := <-errCh:
 		if err != nil {
@@ -169,7 +142,7 @@ func (cp *CodeProcessor) executeCodeInDocker(task domain.Task) (stdout, stderr s
 	}
 
 	// Получаем логи (stdout и stderr)
-	out, err := cp.Consumer.DockerCli.ContainerLogs(ctx, resp.ID, container.LogsOptions{
+	out, err := cp.DockerCli.ContainerLogs(ctx, resp.ID, container.LogsOptions{
 		ShowStdout: true,
 		ShowStderr: true,
 	})
@@ -186,7 +159,7 @@ func (cp *CodeProcessor) executeCodeInDocker(task domain.Task) (stdout, stderr s
 	}
 
 	// Удаляем контейнер вручную
-	err = cp.Consumer.DockerCli.ContainerRemove(ctx, resp.ID, container.RemoveOptions{
+	err = cp.DockerCli.ContainerRemove(ctx, resp.ID, container.RemoveOptions{
 		Force: true, // Принудительное удаление, если контейнер еще работает
 	})
 	if err != nil {
@@ -194,4 +167,34 @@ func (cp *CodeProcessor) executeCodeInDocker(task domain.Task) (stdout, stderr s
 	}
 
 	return stdoutBuf.String(), stderrBuf.String(), nil
+}
+
+func (cp *CodeProcessor) SendResult(taskId string, stdout string, stderr string) error {
+	// Кладем результат кода в json для отправки ответа
+	resultBody, err := json.Marshal(domain.Result{
+		TaskId: taskId,
+		Stdout: stdout,
+		Stderr: stderr,
+	})
+	if err != nil {
+		log.Printf("Failed to marshal result: %v", err)
+		return err
+	}
+	// log.Printf("Result %s", string(resultBody))
+
+	// Создаем и делаем запрос на отправку данных в бд
+	req, err := http.NewRequest("POST", "http://http_server:8080/commit", bytes.NewBuffer([]byte(resultBody)))
+	if err != nil {
+		log.Printf("Failed to create request: %v", err)
+		return err
+	}
+
+	client := &http.Client{}
+	_, err = client.Do(req)
+	if err != nil {
+		log.Printf("Failed to make request: %v", err)
+		return err
+	}
+	// log.Println("Request completed")
+	return nil
 }

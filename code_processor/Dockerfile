@@ -14,20 +14,20 @@ RUN go mod download
 COPY . .
 
 # Собираем приложение
-RUN go build -o main .
+RUN go build -o main code_processor/main.go
 
 # Финальный этап (для уменьшения размера образа)
 FROM alpine:latest AS runner
 
 # Устанавливаем рабочую директорию
-WORKDIR /app
+WORKDIR /code_processor
 
 # Копируем собранное приложение из этапа сборки
 COPY --from=build /build/main ./main
-COPY --from=build /build/config/config.yml ./config.yml
+COPY --from=build /build/code_processor/config/config.yml ./config.yml
 
 # Даем права на выполнение
-RUN chmod +x /app/main
+RUN chmod +x /code_processor/main
 
 # Указываем команду для запуска
-CMD ["/app/main", "--config=/app/config.yml"]
+CMD ["/code_processor/main", "--config=/code_processor/config.yml"]

@@ -14,23 +14,23 @@ RUN go mod download
 COPY . .
 
 # Собираем приложение
-RUN go build -o main .
+RUN go build -o main server/main.go
 
 # Финальный этап (для уменьшения размера образа)
 FROM alpine:latest AS runner
 
 # Устанавливаем рабочую директорию
-WORKDIR /app
+WORKDIR /http_server
 
 # Копируем собранное приложение из этапа сборки
 COPY --from=build /build/main ./main
-COPY --from=build /build/config/config.yml ./config.yml
+COPY --from=build /build/server/config/config.yml ./config.yml
 
 # Устанавливаем curl
 RUN apk add --no-cache curl
 
 # Даем права на выполнение
-RUN chmod +x /app/main
+RUN chmod +x /http_server/main
 
 # Указываем команду для запуска
-CMD ["/app/main", "--config=/app/config.yml"]
+CMD ["/http_server/main", "--config=/http_server/config.yml"]

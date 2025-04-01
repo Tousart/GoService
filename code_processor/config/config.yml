@@ -2,3 +2,11 @@ rabbit_mq:
   host: "rabbitMQ"
   port: 5672
   queue_name: "testQueue"
+postgres_db:
+  host: "postgres"
+  port: 5432
+  db_name: "postgres_db"
+  sslmode: "disable"
+prometheus:
+  host: "0.0.0.0"
+  port: 80

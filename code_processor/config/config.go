@@ -42,6 +42,20 @@ type RabbitMQ struct {
 	QueueName string `yaml:"queue_name"`
 }
 
+type Postgres struct {
+	Host    string `yaml:"host"`
+	Port    uint16 `yaml:"port"`
+	DBName  string `yaml:"db_name"`
+	SSLMode string `yaml:"sslmode"`
+}
+
+type Prometheus struct {
+	Host string `yaml:"host"`
+	Port uint16 `yaml:"port"`
+}
+
 type CodeProcessorConfig struct {
-	RabbitMQ `yaml:"rabbit_mq"`
+	RabbitMQ   `yaml:"rabbit_mq"`
+	Postgres   `yaml:"postgres_db"`
+	Prometheus `yaml:"prometheus"`
 }

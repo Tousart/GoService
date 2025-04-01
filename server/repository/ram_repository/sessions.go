@@ -9,8 +9,8 @@ type SessionsRepository struct {
 	data map[string]domain.Session
 }
 
-func NewSessionsRepository() *SessionsRepository {
-	return &SessionsRepository{data: make(map[string]domain.Session)}
+func NewSessionsRepository() (*SessionsRepository, error) {
+	return &SessionsRepository{data: make(map[string]domain.Session)}, nil
 }
 
 func (rs *SessionsRepository) GetSessionId(sessionId string) (string, error) {

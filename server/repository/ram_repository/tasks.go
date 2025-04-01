@@ -9,10 +9,10 @@ type Tasks struct {
 	data map[string]domain.Task
 }
 
-func NewTasks() *Tasks {
+func NewTasksRepository() (*Tasks, error) {
 	return &Tasks{
 		data: make(map[string]domain.Task),
-	}
+	}, nil
 }
 
 // Возвращаем статус таски

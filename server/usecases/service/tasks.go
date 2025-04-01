@@ -52,10 +52,10 @@ func (rs *Tasks) PostSendTask(translator string, code string) (*domain.Task, err
 	return task, nil
 }
 
-func (rs *Tasks) PostCommitTask(taskId string, stdout string, stderr string) error {
-	task := createTask(taskId, "ready", stdout, stderr)
-	return rs.repository.PostTask(task)
-}
+// func (rs *Tasks) PostCommitTask(taskId string, status string, stdout string, stderr string) error {
+// 	task := createTask(taskId, status, stdout, stderr)
+// 	return rs.repository.PostTask(task)
+// }
 
 func createTask(id string, status string, stdout string, stderr string) *domain.Task {
 	return &domain.Task{

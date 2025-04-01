@@ -5,6 +5,8 @@ services:
     build:
       context: ./
       dockerfile: server/Dockerfile
+    volumes:
+      - ./server/repository/postgres/psql_migrations:/http_server/repository/postgres/psql_migrations  # Монтируем папку с миграциями
     healthcheck:
       test: ["CMD", "curl", "-f", "http://127.0.0.1:8080/health"]
       interval: 30s
@@ -16,12 +18,13 @@ services:
 
   code_processor:
     ports:
-     - "80:8080"
+     - "80:80" # Порты сервера для метрик
     build:
       context: ./
       dockerfile: code_processor/Dockerfile
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock  # Монтируем Docker-сокет
+      - ./code_processor/config/prometheus.yml:/code_processor/config/prometheus.yml
     depends_on:
       rabbitMQ:
         condition: service_healthy
@@ -37,6 +40,48 @@ services:
       timeout: 10s
       retries: 3
 
+  postgres:
+    image: postgres:13.3
+    environment:
+      POSTGRES_DB: "postgres_db"
+      POSTGRES_USER: "user"
+      POSTGRES_PASSWORD: "password"
+    ports:
+     - "5432:5432"
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U user -d postgres_db" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  redis:
+    image: redis:latest
+    environment:
+      REDIS_PASSWORD: "password"
+      # REDIS_USER: "user"
+      # REDIS_USER_PASSWORD: "password"
+    ports:
+     - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "$REDIS_PASSWORD", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./code_processor/config/prometheus.yml:/etc/prometheus/prometheus.yml
+
+  grafana:
+    image: grafana/grafana
+    ports:
+      - 3000:3000
+    volumes:
+      - grafana_data:/var/lib/grafana
+
   server_test:
     build:
       context: ./
@@ -47,3 +92,6 @@ services:
       http_server:
         condition: service_healthy
     profiles: ['test']
+
+volumes:
+  grafana_data:

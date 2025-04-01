@@ -4,6 +4,7 @@ import (
 	"flag"
 	"log"
 	"os"
+	"time"
 
 	"github.com/ilyakaznacheev/cleanenv"
 )
@@ -46,7 +47,23 @@ type HTTPConfig struct {
 	Address string `yaml:"address"`
 }
 
+type Postgres struct {
+	Host    string `yaml:"host"`
+	Port    uint16 `yaml:"port"`
+	DBName  string `yaml:"db_name"`
+	SSLMode string `yaml:"sslmode"`
+}
+
+type Redis struct {
+	Address         string        `yaml:"address"`
+	DefaultPassword string        `yaml:"default_password"`
+	DBNumber        int           `yaml:"db_number"`
+	Duration        time.Duration `yaml:"duration"`
+}
+
 type ServerConfig struct {
 	HTTPConfig `yaml:"http_server"`
 	RabbitMQ   `yaml:"rabbit_mq"`
+	Postgres   `yaml:"postgres_db"`
+	Redis      `yaml:"redis_db"`
 }

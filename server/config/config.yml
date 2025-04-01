@@ -4,3 +4,13 @@ rabbit_mq:
   host: "rabbitMQ"
   port: 5672
   queue_name: "testQueue"
+postgres_db:
+  host: "postgres"
+  port: 5432
+  db_name: "postgres_db"
+  sslmode: "disable"
+redis_db:
+  address: "redis:6379"
+  default_password: "password"
+  db_number: 0
+  duration: 24h

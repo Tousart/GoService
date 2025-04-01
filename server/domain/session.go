@@ -1,6 +1,6 @@
 package domain
 
 type Session struct {
-	UserId    string
-	SessionId string
+	UserId    string `json:"user_id"`
+	SessionId string `json:"session_id"`
 }

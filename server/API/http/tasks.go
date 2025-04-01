@@ -110,25 +110,25 @@ func (s *Tasks) postHandlerCreate(w http.ResponseWriter, r *http.Request) {
 	types.ProcessErrorCreateTask(w, err, &types.GetTaskIdHandler{Value: task.TaskId})
 }
 
-func (s *Tasks) postHandlerCommit(w http.ResponseWriter, r *http.Request) {
-	req, err := types.CreateTaskCommitHandler(r)
-	if err != nil {
-		http.Error(w, "Bad Request", http.StatusBadRequest)
-		return
-	}
+// func (s *Tasks) postHandlerCommit(w http.ResponseWriter, r *http.Request) {
+// 	req, err := types.CreateTaskCommitHandler(r)
+// 	if err != nil {
+// 		http.Error(w, "Bad Request", http.StatusBadRequest)
+// 		return
+// 	}
 
-	err = s.serviceTasks.PostCommitTask(req.TaskId, req.Stdout, req.Stderr)
-	if err != nil {
-		http.Error(w, "Internal Error", http.StatusInternalServerError)
-		return
-	}
-}
+// 	err = s.serviceTasks.PostCommitTask(req.TaskId, req.Status, req.Stdout, req.Stderr)
+// 	if err != nil {
+// 		http.Error(w, "Internal Error", http.StatusInternalServerError)
+// 		return
+// 	}
+// }
 
 func (s *Tasks) WithTasksHandlers(r chi.Router) {
 	r.Route("/", func(r chi.Router) {
 		r.Get("/status/{task_id}", s.getHandlerStatus)
 		r.Get("/result/{task_id}", s.getHandlerResult)
 		r.Post("/task", s.postHandlerCreate)
-		r.Post("/commit", s.postHandlerCommit)
+		// r.Post("/commit", s.postHandlerCommit)
 	})
 }

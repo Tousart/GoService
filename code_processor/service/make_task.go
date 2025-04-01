@@ -3,19 +3,19 @@ package service
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"httpServer/code_processor/config"
 	"httpServer/code_processor/domain"
+	"httpServer/code_processor/repository"
 	"io"
 	"log"
-	"net/http"
 	"time"
 
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/client"
 	"github.com/docker/docker/pkg/stdcopy"
+	_ "github.com/lib/pq"
 	"github.com/streadway/amqp"
 )
 
@@ -24,9 +24,10 @@ type CodeProcessor struct {
 	Channel    *amqp.Channel
 	QueueName  string
 	DockerCli  *client.Client
+	DB         repository.Result
 }
 
-func NewCodeProcessor(cfg config.RabbitMQ) (*CodeProcessor, error) {
+func NewCodeProcessor(cfg config.RabbitMQ, db repository.Result) (*CodeProcessor, error) {
 	amqpURL := fmt.Sprintf("amqp://guest:guest@%s:%d", cfg.Host, cfg.Port)
 	conn, err := amqp.Dial(amqpURL)
 	if err != nil {
@@ -61,10 +62,18 @@ func NewCodeProcessor(cfg config.RabbitMQ) (*CodeProcessor, error) {
 		Channel:    ch,
 		QueueName:  cfg.QueueName,
 		DockerCli:  dockerCli,
+		DB:         db,
 	}, nil
 }
 
 func (cp *CodeProcessor) ExecuteCodeInDocker(task domain.Task) (stdout, stderr string, err error) {
+	// Записываем метрику времени выполнения запроса
+	startTime := time.Now()
+	defer func() {
+		observeReqDuration(time.Since(startTime), task.Translator)
+		observeUsedTranslator(task.Translator)
+	}()
+
 	// Определяем образ
 	var imageName string
 	if task.Translator == "python3" {
@@ -170,31 +179,15 @@ func (cp *CodeProcessor) ExecuteCodeInDocker(task domain.Task) (stdout, stderr s
 }
 
 func (cp *CodeProcessor) SendResult(taskId string, stdout string, stderr string) error {
-	// Кладем результат кода в json для отправки ответа
-	resultBody, err := json.Marshal(domain.Result{
+	result := domain.Result{
 		TaskId: taskId,
+		Status: "ready",
 		Stdout: stdout,
 		Stderr: stderr,
-	})
-	if err != nil {
-		log.Printf("Failed to marshal result: %v", err)
-		return err
-	}
-	// log.Printf("Result %s", string(resultBody))
-
-	// Создаем и делаем запрос на отправку данных в бд
-	req, err := http.NewRequest("POST", "http://http_server:8080/commit", bytes.NewBuffer([]byte(resultBody)))
-	if err != nil {
-		log.Printf("Failed to create request: %v", err)
-		return err
 	}
 
-	client := &http.Client{}
-	_, err = client.Do(req)
-	if err != nil {
-		log.Printf("Failed to make request: %v", err)
-		return err
-	}
-	// log.Println("Request completed")
+	// Отправляем результат в бд
+	cp.DB.SendResult(&result)
+
 	return nil
 }

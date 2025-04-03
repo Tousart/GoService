@@ -3,7 +3,6 @@ package postgres
 import (
 	"database/sql"
 	"errors"
-	"fmt"
 	"httpServer/server/config"
 	"httpServer/server/domain"
 	"httpServer/server/repository"
@@ -17,13 +16,7 @@ type UsersRepository struct {
 }
 
 func NewUsersRepository(cfg config.Postgres) (*UsersRepository, error) {
-	connStr := fmt.Sprintf("postgres://user:password@%s:%d/%s?sslmode=%s", cfg.Host, cfg.Port, cfg.DBName, cfg.SSLMode)
-	db, err := sql.Open("postgres", connStr)
-	if err != nil {
-		return nil, err
-	}
-
-	err = db.Ping()
+	db, err := connectToDB(&cfg.Host, &cfg.Port, &cfg.DBName, &cfg.SSLMode)
 	if err != nil {
 		return nil, err
 	}

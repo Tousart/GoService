@@ -2,7 +2,6 @@ package postgres
 
 import (
 	"database/sql"
-	"fmt"
 	"httpServer/code_processor/config"
 	"httpServer/code_processor/domain"
 )
@@ -12,13 +11,7 @@ type ResultRepository struct {
 }
 
 func NewResultRepository(cfg config.Postgres) (*ResultRepository, error) {
-	connStr := fmt.Sprintf("postgres://user:password@%s:%d/%s?sslmode=%s", cfg.Host, cfg.Port, cfg.DBName, cfg.SSLMode)
-	db, err := sql.Open("postgres", connStr)
-	if err != nil {
-		return nil, err
-	}
-
-	err = db.Ping()
+	db, err := connectToDB(&cfg.Host, &cfg.Port, &cfg.DBName, &cfg.SSLMode)
 	if err != nil {
 		return nil, err
 	}
@@ -29,11 +22,7 @@ func NewResultRepository(cfg config.Postgres) (*ResultRepository, error) {
 }
 
 func (rs *ResultRepository) SendResult(result *domain.Result) error {
-	_, err := rs.db.Exec(`INSERT INTO tasks (task_id, status, stdout, stderr) VALUES ($1, $2, $3, $4)
-	ON CONFLICT (task_id) DO UPDATE SET
-	status = EXCLUDED.status,
-	stdout = EXCLUDED.stdout,
-	stderr = EXCLUDED.stderr`, result.TaskId, result.Status, result.Stdout, result.Stderr)
+	_, err := rs.db.Exec("UPDATE tasks SET status = $1, stdout = $2, stderr = $3 WHERE task_id = $4", result.Status, result.Stdout, result.Stderr, result.TaskId)
 	if err != nil {
 		return err
 	}

@@ -5,7 +5,7 @@ import (
 	"httpServer/code_processor/config"
 	"httpServer/code_processor/metrics"
 	"httpServer/code_processor/repository/postgres"
-	"httpServer/code_processor/service"
+	"httpServer/code_processor/usecases/service"
 	"log"
 )
 
@@ -28,13 +28,18 @@ func main() {
 		log.Fatalf("Failed to connect to db: %v", err)
 	}
 
-	// "amqp://guest:guest@rabbitMQ:5672"
+	// usecases для сервиса
 	codeProcessor, err := service.NewCodeProcessor(cfg.RabbitMQ, resultRepo)
 	if err != nil {
 		log.Fatalf("Failed to make consumer %v", err)
 	}
 
-	consumer := rabbitmq.NewConsumer(*codeProcessor)
+	// Создаем консьюмер (слушатель очереди)
+	consumer, err := rabbitmq.NewConsumer(cfg.RabbitMQ, codeProcessor)
+	if err != nil {
+		log.Fatalf("Failed to create consumer %v", err)
+	}
+
 	if err = consumer.MakeTask(); err != nil {
 		log.Fatalf("Failed to execute task %v", err)
 	}

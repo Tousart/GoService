@@ -30,14 +30,13 @@ func (rs *Tasks) GetResult(taskId string) (string, string, error) {
 
 func (rs *Tasks) PostSendTask(translator string, code string) (*domain.Task, error) {
 	task := createTask(uuid.New().String(), "in_progress", "", "")
-	taskMessage := createTaskMessage(task.TaskId, translator, code)
+	rs.repository.PostTask(task)
 
+	taskMessage := createTaskMessage(task.TaskId, translator, code)
 	err := rs.sender.Send(taskMessage)
 	if err != nil {
 		return nil, err
 	}
-
-	rs.repository.PostTask(task)
 
 	// имитация бурной деятельности
 	// go func(task *domain.Task) {

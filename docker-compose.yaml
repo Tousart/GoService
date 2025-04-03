@@ -15,6 +15,10 @@ services:
     depends_on:
       rabbitMQ:
         condition: service_healthy
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
 
   code_processor:
     ports:
@@ -27,6 +31,8 @@ services:
       - ./code_processor/config/prometheus.yml:/code_processor/config/prometheus.yml
     depends_on:
       rabbitMQ:
+        condition: service_healthy
+      postgres:
         condition: service_healthy
 
   rabbitMQ:

@@ -16,41 +16,14 @@ import (
 	"github.com/docker/docker/client"
 	"github.com/docker/docker/pkg/stdcopy"
 	_ "github.com/lib/pq"
-	// "github.com/streadway/amqp"
 )
 
 type CodeProcessor struct {
-	// Connection *amqp.Connection
-	// Channel    *amqp.Channel
-	// QueueName  string
 	dockerCli *client.Client
 	db        repository.Result
 }
 
 func NewCodeProcessor(cfg config.RabbitMQ, db repository.Result) (*CodeProcessor, error) {
-	// amqpURL := fmt.Sprintf("amqp://guest:guest@%s:%d", cfg.Host, cfg.Port)
-	// conn, err := amqp.Dial(amqpURL)
-	// if err != nil {
-	// 	return nil, err
-	// }
-
-	// ch, err := conn.Channel()
-	// if err != nil {
-	// 	return nil, err
-	// }
-
-	// _, err = ch.QueueDeclare(
-	// 	cfg.QueueName, // имя очереди
-	// 	true,          // устойчивость (сохранится при перезапуске сервера)
-	// 	false,         // очередь НЕ будет удалена, даже когда нет потребителей
-	// 	false,         // будет эксклюзивна только для текущего соединения
-	// 	false,         // будет ждать ответа от сервера, что очередь создана
-	// 	nil,           // дополнительные аргументы
-	// )
-	// if err != nil {
-	// 	return nil, err
-	// }
-
 	// Создаем Docker-клиент
 	dockerCli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
@@ -58,9 +31,6 @@ func NewCodeProcessor(cfg config.RabbitMQ, db repository.Result) (*CodeProcessor
 	}
 
 	return &CodeProcessor{
-		// Connection: conn,
-		// Channel:    ch,
-		// QueueName:  cfg.QueueName,
 		dockerCli: dockerCli,
 		db:        db,
 	}, nil

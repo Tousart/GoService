@@ -38,23 +38,8 @@ func (rs *Tasks) PostSendTask(translator string, code string) (*domain.Task, err
 		return nil, err
 	}
 
-	// имитация бурной деятельности
-	// go func(task *domain.Task) {
-	// 	time.Sleep(40 * time.Second)
-
-	// 	task.Status = "ready"
-	// 	task.Result = "end"
-
-	// 	rs.repository.PostTask(task)
-	// }(task)
-
 	return task, nil
 }
-
-// func (rs *Tasks) PostCommitTask(taskId string, status string, stdout string, stderr string) error {
-// 	task := createTask(taskId, status, stdout, stderr)
-// 	return rs.repository.PostTask(task)
-// }
 
 func createTask(id string, status string, stdout string, stderr string) *domain.Task {
 	return &domain.Task{

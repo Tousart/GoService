@@ -5,10 +5,13 @@ rabbit_mq:
   port: 5672
   queue_name: "testQueue"
 postgres_db:
+  # dialect: postgres
+  # datasource: "user=user password=password host=postgres port=5432 dbname=postgres_db sslmode=disable"
   host: "postgres"
   port: 5432
   db_name: "postgres_db"
   sslmode: "disable"
+  dir: repository/postgres/psql_migrations
 redis_db:
   address: "redis:6379"
   default_password: "password"

@@ -47,17 +47,6 @@ func CreateTaskRequestHandler(r *http.Request) (*TaskBody, error) {
 	return &taskBody, nil
 }
 
-// func CreateTaskCommitHandler(r *http.Request) (*TaskResult, error) {
-// 	var taskResult TaskResult
-// 	err := json.NewDecoder(r.Body).Decode(&taskResult)
-
-// 	if err != nil {
-// 		return nil, errors.New("bad request")
-// 	}
-
-// 	return &taskResult, nil
-// }
-
 type GetTaskIdHandler struct {
 	Value string `json:"task_id"`
 }
@@ -75,10 +64,3 @@ type TaskBody struct {
 	Translator string `json:"translator"`
 	Code       string `json:"code"`
 }
-
-// type TaskResult struct {
-// 	TaskId string `json:"task_id"`
-// 	Status string `json:"status"`
-// 	Stdout string `json:"stdout"`
-// 	Stderr string `json:"stderr"`
-// }

@@ -3,6 +3,7 @@ package postgres
 import (
 	"database/sql"
 	"errors"
+	"httpServer/pkg"
 	"httpServer/server/config"
 	"httpServer/server/domain"
 	"httpServer/server/repository"
@@ -16,14 +17,14 @@ type UsersRepository struct {
 }
 
 func NewUsersRepository(cfg config.Postgres) (*UsersRepository, error) {
-	db, err := connectToDB(&cfg.Host, &cfg.Port, &cfg.DBName, &cfg.SSLMode)
+	db, err := pkg.ConnectToDB(&cfg.Host, &cfg.Port, &cfg.DBName, &cfg.SSLMode)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := applyMigrations(db); err != nil {
-		return nil, err
-	}
+	// if err := applyMigrations(db); err != nil {
+	// 	return nil, err
+	// }
 
 	return &UsersRepository{
 		db: db,
@@ -38,7 +39,6 @@ func (rs *UsersRepository) PostRegister(user *domain.User) error {
 	}
 
 	if exists {
-		// log.Println("user exists")
 		return repository.ErrUserExists
 	}
 

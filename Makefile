@@ -4,7 +4,7 @@ launch_services: build_services
 	docker compose up
 
 launch_with_tests: build_services
-	docker compose --profile test up --abort-on-container-exit --exit-code-from server_test
+	docker compose --profile test up
 
 stop:
 	docker compose down
@@ -13,7 +13,7 @@ build_services:
 	docker compose build
 
 up_db: 
-	docker compose up data_base
+	docker compose up postgres
 
 attach:
-	docker exec -it httpserver-data_base-1 psql -U user -d postgres_db
+	docker exec -it httpserver-postgres-1 psql -U user -d postgres_db

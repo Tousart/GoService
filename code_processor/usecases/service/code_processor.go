@@ -16,41 +16,14 @@ import (
 	"github.com/docker/docker/client"
 	"github.com/docker/docker/pkg/stdcopy"
 	_ "github.com/lib/pq"
-	"github.com/streadway/amqp"
 )
 
 type CodeProcessor struct {
-	Connection *amqp.Connection
-	Channel    *amqp.Channel
-	QueueName  string
-	DockerCli  *client.Client
-	DB         repository.Result
+	dockerCli *client.Client
+	db        repository.Result
 }
 
 func NewCodeProcessor(cfg config.RabbitMQ, db repository.Result) (*CodeProcessor, error) {
-	amqpURL := fmt.Sprintf("amqp://guest:guest@%s:%d", cfg.Host, cfg.Port)
-	conn, err := amqp.Dial(amqpURL)
-	if err != nil {
-		return nil, err
-	}
-
-	ch, err := conn.Channel()
-	if err != nil {
-		return nil, err
-	}
-
-	_, err = ch.QueueDeclare(
-		cfg.QueueName, // имя очереди
-		true,          // устойчивость (сохранится при перезапуске сервера)
-		false,         // очередь НЕ будет удалена, даже когда нет потребителей
-		false,         // будет эксклюзивна только для текущего соединения
-		false,         // будет ждать ответа от сервера, что очередь создана
-		nil,           // дополнительные аргументы
-	)
-	if err != nil {
-		return nil, err
-	}
-
 	// Создаем Docker-клиент
 	dockerCli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
@@ -58,11 +31,8 @@ func NewCodeProcessor(cfg config.RabbitMQ, db repository.Result) (*CodeProcessor
 	}
 
 	return &CodeProcessor{
-		Connection: conn,
-		Channel:    ch,
-		QueueName:  cfg.QueueName,
-		DockerCli:  dockerCli,
-		DB:         db,
+		dockerCli: dockerCli,
+		db:        db,
 	}, nil
 }
 
@@ -97,7 +67,7 @@ func (cp *CodeProcessor) ExecuteCodeInDocker(task domain.Task) (stdout, stderr s
 	ctx := context.Background()
 
 	// Загружаем образ
-	reader, err := cp.DockerCli.ImagePull(ctx, imageName, image.PullOptions{})
+	reader, err := cp.dockerCli.ImagePull(ctx, imageName, image.PullOptions{})
 	if err != nil {
 		return "", "", fmt.Errorf("failed to pull image: %v", err)
 	}
@@ -109,7 +79,7 @@ func (cp *CodeProcessor) ExecuteCodeInDocker(task domain.Task) (stdout, stderr s
 	/* Cоздание контейнера и получение результата выполнения кода */
 
 	// Создаем контейнер
-	resp, err := cp.DockerCli.ContainerCreate(ctx,
+	resp, err := cp.dockerCli.ContainerCreate(ctx,
 		&container.Config{
 			Image: imageName,
 			Cmd:   cmd,
@@ -130,7 +100,7 @@ func (cp *CodeProcessor) ExecuteCodeInDocker(task domain.Task) (stdout, stderr s
 	}
 
 	// Запускаем контейнер
-	err = cp.DockerCli.ContainerStart(ctx, resp.ID, container.StartOptions{})
+	err = cp.dockerCli.ContainerStart(ctx, resp.ID, container.StartOptions{})
 	if err != nil {
 		return "", "", fmt.Errorf("failed to start container: %v", err)
 	}
@@ -141,7 +111,7 @@ func (cp *CodeProcessor) ExecuteCodeInDocker(task domain.Task) (stdout, stderr s
 	defer cancel()
 
 	// Ждем завершения контейнера
-	statusCh, errCh := cp.DockerCli.ContainerWait(timeoutCtx, resp.ID, container.WaitConditionNotRunning)
+	statusCh, errCh := cp.dockerCli.ContainerWait(timeoutCtx, resp.ID, container.WaitConditionNotRunning)
 	select {
 	case err := <-errCh:
 		if err != nil {
@@ -151,7 +121,7 @@ func (cp *CodeProcessor) ExecuteCodeInDocker(task domain.Task) (stdout, stderr s
 	}
 
 	// Получаем логи (stdout и stderr)
-	out, err := cp.DockerCli.ContainerLogs(ctx, resp.ID, container.LogsOptions{
+	out, err := cp.dockerCli.ContainerLogs(ctx, resp.ID, container.LogsOptions{
 		ShowStdout: true,
 		ShowStderr: true,
 	})
@@ -168,7 +138,7 @@ func (cp *CodeProcessor) ExecuteCodeInDocker(task domain.Task) (stdout, stderr s
 	}
 
 	// Удаляем контейнер вручную
-	err = cp.DockerCli.ContainerRemove(ctx, resp.ID, container.RemoveOptions{
+	err = cp.dockerCli.ContainerRemove(ctx, resp.ID, container.RemoveOptions{
 		Force: true, // Принудительное удаление, если контейнер еще работает
 	})
 	if err != nil {
@@ -187,7 +157,7 @@ func (cp *CodeProcessor) SendResult(taskId string, stdout string, stderr string)
 	}
 
 	// Отправляем результат в бд
-	cp.DB.SendResult(&result)
+	cp.db.SendResult(&result)
 
 	return nil
 }

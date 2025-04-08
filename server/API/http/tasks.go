@@ -129,6 +129,5 @@ func (s *Tasks) WithTasksHandlers(r chi.Router) {
 		r.Get("/status/{task_id}", s.getHandlerStatus)
 		r.Get("/result/{task_id}", s.getHandlerResult)
 		r.Post("/task", s.postHandlerCreate)
-		// r.Post("/commit", s.postHandlerCommit)
 	})
 }

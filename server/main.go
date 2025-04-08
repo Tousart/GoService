@@ -30,14 +30,11 @@ import (
 // @BasePath /
 
 func main() {
-	// addr := flag.String("addr", ":8080", "address")
 	httpFlags := config.ParseFlags()
 	var cfg config.ServerConfig
 	config.MustLoad(httpFlags.HTTPConfigPath, &cfg)
 
 	// Сессии
-	// sessionsRepo, err := ramrepository.NewSessionsRepository()
-	// sessionsRepo, err := redis.NewSessionsRepository("redis:6379", "password", 0, 24*time.Hour)
 	sessionsRepo, err := redis.NewSessionsRepository(cfg.Redis)
 	if err != nil {
 		log.Fatalf("failed to create sessions repository: %v", err)
@@ -45,8 +42,6 @@ func main() {
 	sessionsService := service.NewSessions(sessionsRepo)
 
 	// Пользователи
-	// usersRepo := ramrepository.NewUsersRepository()
-	// usersRepo, err := postgres.NewUsersRepository("postgres://user:password@data_base:5432/postgres_db?sslmode=disable")
 	usersRepo, err := postgres.NewUsersRepository(cfg.Postgres)
 	if err != nil {
 		log.Fatalf("failed to create users repository: %v", err)
@@ -60,8 +55,6 @@ func main() {
 		log.Fatalf("failed to create tasks sender: %v", err)
 	}
 
-	// tasksRepo, err := ramrepository.NewTasks()
-	// tasksRepo, err := postgres.NewTasksRepository("postgres://user:password@data_base:5432/postgres_db?sslmode=disable")
 	tasksRepo, err := postgres.NewTasksRepository(cfg.Postgres)
 	if err != nil {
 		log.Fatalf("failed to create tasks repository: %v", err)
